@@ -11,9 +11,9 @@ const BOT_AVATAR = {
     justifyContent: 'center',
     fontSize: '14px',
     fontWeight: 700,
-    background: 'linear-gradient(135deg, #6C5CE7, #8B7CF8)',
+    background: 'linear-gradient(135deg, #732841, #9b3d5a)',
     color: 'white',
-    boxShadow: '0 3px 10px rgba(108,92,231,0.35)',
+    boxShadow: '0 3px 10px rgba(115,40,65,0.35)',
     marginBottom: '4px',
 }
 
@@ -49,9 +49,9 @@ export default function MessageBubble({ message, isTyping }) {
             maxWidth: '82%',
             padding: '14px 18px',
             borderRadius: '20px 20px 4px 20px',
-            background: 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
+            background: 'linear-gradient(135deg, #732841, #5a1f31)',
             color: 'white',
-            boxShadow: '0 3px 16px rgba(108,92,231,0.30)',
+            boxShadow: '0 3px 16px rgba(115,40,65,0.30)',
             fontSize: '15px',
             lineHeight: 1.65,
             fontFamily: 'Inter, sans-serif',

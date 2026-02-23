@@ -28,8 +28,8 @@ export default function ChatUI() {
             <header
                 className="flex-shrink-0 flex items-center justify-between px-5 py-4"
                 style={{
-                    background: 'linear-gradient(135deg, #6C5CE7 0%, #5A4DD4 100%)',
-                    boxShadow: '0 2px 12px rgba(108,92,231,0.25)',
+                    background: 'linear-gradient(135deg, #732841 0%, #5a1f31 100%)',
+                    boxShadow: '0 2px 12px rgba(115,40,65,0.30)',
                 }}
             >
                 <div className="flex items-center gap-3.5">

@@ -5,19 +5,20 @@
 /* ─── PREMIUM LIGHT THEME ───────────────────────────────────── */
 :root {
   --bg: #FAF8F5;
-  --bg2: #F3F0EC;
+  --bg2: #F5F0F2;
   --surface: #FFFFFF;
-  --surface2: #F7F5F2;
-  --border: #E8E3DC;
-  --border2: #D0C9C0;
+  --surface2: #F8F3F5;
+  --border: #EAE0E4;
+  --border2: #D4C4CA;
 
-  --accent: #6C5CE7;
-  --accent-soft: #EDE9FF;
-  --accent2: #8B7CF8;
+  --accent: #732841;
+  --accent-dark: #5a1f31;
+  --accent-soft: #FAEDF1;
+  --accent2: #9b3d5a;
 
-  --text: #1A1819;
-  --text2: #4A4560;
-  --muted: #9A96A8;
+  --text: #1A1519;
+  --text2: #4A3540;
+  --muted: #9A8A90;
 
   --success: #00B894;
   --danger: #E17055;
@@ -176,7 +177,7 @@ select {
 
 .input-field:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.10);
+  box-shadow: 0 0 0 3px rgba(115, 40, 65, 0.12);
 }
 
 .input-field::placeholder {

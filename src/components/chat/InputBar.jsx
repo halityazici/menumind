@@ -49,7 +49,7 @@ export default function InputBar({ onSend, isLoading, disabled }) {
                     paddingBottom: '12px',
                     background: 'var(--bg2)',
                     border: `1.5px solid ${canSend ? 'var(--accent)' : 'var(--border)'}`,
-                    boxShadow: canSend ? '0 0 0 3px rgba(108,92,231,0.08)' : 'none',
+                    boxShadow: canSend ? '0 0 0 3px rgba(115,40,65,0.08)' : 'none',
                     transition: 'border-color 0.2s, box-shadow 0.2s',
                 }}
             >
@@ -76,9 +76,9 @@ export default function InputBar({ onSend, isLoading, disabled }) {
                     className="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center"
                     style={{
                         background: canSend
-                            ? 'linear-gradient(135deg, #6C5CE7, #5A4DD4)'
+                            ? 'linear-gradient(135deg, #732841, #5a1f31)'
                             : 'var(--border)',
-                        boxShadow: canSend ? '0 2px 10px rgba(108,92,231,0.35)' : 'none',
+                        boxShadow: canSend ? '0 2px 10px rgba(115,40,65,0.35)' : 'none',
                         cursor: canSend ? 'pointer' : 'not-allowed',
                         transition: 'all 0.2s',
                         transform: canSend ? 'scale(1)' : 'scale(0.9)',

@@ -70,7 +70,7 @@ export default function LoginGuard({ children }) {
                 position: 'fixed',
                 inset: 0,
                 zIndex: 50,
-                background: 'linear-gradient(160deg, #EDE9FE 0%, #F5F3FF 40%, #EEF2FF 100%)',
+                background: 'linear-gradient(160deg, #F9EDF2 0%, #FDF5F7 40%, #FFF3F6 100%)',
                 overflowY: 'auto',
             }}
         >
@@ -79,7 +79,7 @@ export default function LoginGuard({ children }) {
                 className={`w-full max-w-md rounded-3xl overflow-hidden ${shake ? 'animate-[shake_0.4s_ease]' : ''}`}
                 style={{
                     background: 'white',
-                    boxShadow: '0 12px 48px rgba(108,92,231,0.18)',
+                    boxShadow: '0 12px 48px rgba(115,40,65,0.18)',
                 }}
             >
                 {/* Header band */}
@@ -93,7 +93,7 @@ export default function LoginGuard({ children }) {
                         paddingBottom: '48px',
                         paddingLeft: '32px',
                         paddingRight: '32px',
-                        background: 'linear-gradient(135deg, #6C5CE7 0%, #5A4DD4 100%)',
+                        background: 'linear-gradient(135deg, #732841 0%, #5a1f31 100%)',
                     }}
                 >
                     <div
@@ -229,8 +229,8 @@ export default function LoginGuard({ children }) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            background: loading ? '#A09FE8' : 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
-                            boxShadow: '0 4px 18px rgba(108,92,231,0.4)',
+                            background: loading ? '#c07090' : 'linear-gradient(135deg, #732841, #5a1f31)',
+                            boxShadow: '0 4px 18px rgba(115,40,65,0.4)',
                             letterSpacing: '0.02em',
                             border: 'none',
                             cursor: loading ? 'not-allowed' : 'pointer',

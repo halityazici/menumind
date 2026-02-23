@@ -139,8 +139,8 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                             border: 'none',
                             cursor: 'pointer',
                             fontFamily: 'Inter, sans-serif',
-                            background: 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
-                            boxShadow: '0 4px 14px rgba(108,92,231,0.35)',
+                            background: 'linear-gradient(135deg, #732841, #5a1f31)',
+                            boxShadow: '0 4px 14px rgba(115,40,65,0.35)',
                         }}
                     >
                         Harika, teşekkürler! 🎉
@@ -348,7 +348,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                                                             borderRadius: '12px',
                                                             cursor: 'pointer',
                                                             background: inCart ? 'var(--accent-soft)' : 'var(--surface2)',
-                                                            border: `1px solid ${inCart ? 'rgba(108,92,231,0.25)' : 'var(--border)'}`,
+                                                            border: `1px solid ${inCart ? 'rgba(115,40,65,0.25)' : 'var(--border)'}`,
                                                             transition: 'all 0.1s',
                                                         }}
                                                         onClick={() => setSelectedItem(item)}
@@ -392,7 +392,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); addToCart(item) }}
                                                                     className="w-7 h-7 rounded-xl flex items-center justify-center transition-all"
-                                                                    style={{ background: 'var(--accent)', color: 'white', boxShadow: '0 2px 6px rgba(108,92,231,0.3)' }}
+                                                                    style={{ background: 'var(--accent)', color: 'white', boxShadow: '0 2px 6px rgba(115,40,65,0.3)' }}
                                                                 >
                                                                     <Plus size={13} />
                                                                 </button>
@@ -527,9 +527,9 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                         fontFamily: 'Inter, sans-serif',
                         background: (status === STATUS.LOADING || cart.length === 0)
                             ? 'var(--border2)'
-                            : 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
+                            : 'linear-gradient(135deg, #732841, #5a1f31)',
                         boxShadow: (cart.length > 0 && status !== STATUS.LOADING)
-                            ? '0 4px 14px rgba(108,92,231,0.35)'
+                            ? '0 4px 14px rgba(115,40,65,0.35)'
                             : 'none',
                         cursor: (status === STATUS.LOADING || cart.length === 0) ? 'not-allowed' : 'pointer',
                     }}

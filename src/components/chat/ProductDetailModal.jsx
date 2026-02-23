@@ -182,8 +182,8 @@ export default function ProductDetailModal({ item, cartQty, onClose, onAdd, onCh
                         onClick={handleAdd}
                         className="flex-1 py-3.5 rounded-2xl font-semibold text-[15px] flex items-center justify-center gap-2 text-white transition-all active:scale-95"
                         style={{
-                            background: 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
-                            boxShadow: '0 4px 14px rgba(108,92,231,0.35)',
+                            background: 'linear-gradient(135deg, #732841, #5a1f31)',
+                            boxShadow: '0 4px 14px rgba(115,40,65,0.35)',
                         }}
                     >
                         <ShoppingBag size={17} />

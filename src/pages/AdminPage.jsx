@@ -35,8 +35,8 @@ function AdminDashboard({ onLogout }) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '14px 28px',
-                    background: 'linear-gradient(135deg, #6C5CE7 0%, #5A4DD4 100%)',
-                    boxShadow: '0 2px 12px rgba(108,92,231,0.25)',
+                    background: 'linear-gradient(135deg, #732841 0%, #5a1f31 100%)',
+                    boxShadow: '0 2px 12px rgba(115,40,65,0.25)',
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

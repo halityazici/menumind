@@ -43,7 +43,7 @@ function ChatLayout() {
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: '48px',
-          background: 'linear-gradient(160deg, #6C5CE7 0%, #4834C4 60%, #3B2BAE 100%)',
+          background: 'linear-gradient(160deg, #732841 0%, #5a1f31 60%, #4a1828 100%)',
         }}
       >
         {/* Logo üst */}

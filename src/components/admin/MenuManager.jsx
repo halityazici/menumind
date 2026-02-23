@@ -82,7 +82,7 @@ function ItemEditModal({ form, setForm, onSave, onClose, saving, imgUploading, i
                                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium"
                                     style={{
                                         background: 'var(--accent-soft)',
-                                        border: '1.5px dashed rgba(108,92,231,0.35)',
+                                        border: '1.5px dashed rgba(115,40,65,0.35)',
                                         color: 'var(--accent)',
                                     }}
                                 >
@@ -297,8 +297,8 @@ function ItemEditModal({ form, setForm, onSave, onClose, saving, imgUploading, i
                             justifyContent: 'center',
                             gap: '8px',
                             color: 'white',
-                            background: 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
-                            boxShadow: '0 4px 14px rgba(108,92,231,0.3)',
+                            background: 'linear-gradient(135deg, #732841, #5a1f31)',
+                            boxShadow: '0 4px 14px rgba(115,40,65,0.3)',
                             opacity: saving ? 0.7 : 1,
                             border: 'none',
                             cursor: saving ? 'not-allowed' : 'pointer',
@@ -440,7 +440,7 @@ export default function MenuManager() {
                         justifyContent: 'center',
                         gap: '10px',
                         background: 'var(--accent-soft)',
-                        border: '2px dashed rgba(108,92,231,0.35)',
+                        border: '2px dashed rgba(115,40,65,0.35)',
                         color: 'var(--accent)',
                         cursor: 'pointer',
                         fontFamily: 'Inter, sans-serif',
@@ -471,8 +471,8 @@ export default function MenuManager() {
                                 padding: '14px 20px',
                                 marginBottom: '16px',
                                 borderRadius: '16px',
-                                background: 'linear-gradient(135deg, rgba(108,92,231,0.10) 0%, rgba(108,92,231,0.04) 100%)',
-                                border: '1px solid rgba(108,92,231,0.18)',
+                                background: 'linear-gradient(135deg, rgba(115,40,65,0.10) 0%, rgba(115,40,65,0.04) 100%)',
+                                border: '1px solid rgba(115,40,65,0.18)',
                                 borderLeft: '4px solid var(--accent)',
                             }}
                         >
@@ -595,7 +595,7 @@ export default function MenuManager() {
                                         <button
                                             onClick={() => openEdit(item)}
                                             className="p-2 rounded-xl"
-                                            style={{ background: 'rgba(108,92,231,0.08)' }}
+                                            style={{ background: 'rgba(115,40,65,0.08)' }}
                                         >
                                             <Pencil size={14} style={{ color: 'var(--accent)' }} />
                                         </button>

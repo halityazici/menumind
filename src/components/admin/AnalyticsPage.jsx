@@ -20,7 +20,7 @@ const fmtSec = (s) => {
 }
 
 const STATUS_COLORS = {
-    'new': '#6C5CE7',
+    'new': '#732841',
     'preparing': '#FDCB6E',
     'delivered': '#00B894',
     'cancelled': '#E17557',
@@ -32,7 +32,7 @@ const STATUS_LABELS = {
     'served': 'Teslim Edildi',
     'cancelled': 'İptal',
 }
-const CHART_COLORS = ['#6C5CE7', '#00B894', '#FDCB6E', '#E17557', '#74B9FF', '#FD79A8']
+const CHART_COLORS = ['#732841', '#00B894', '#FDCB6E', '#E17557', '#74B9FF', '#FD79A8']
 
 /* ── KPI Card ─────────────────────────────────────────────── */
 function KpiCard({ icon: Icon, label, value, sub, color = 'var(--accent)' }) {
@@ -251,7 +251,7 @@ export default function AnalyticsPage() {
             {/* KPI grid */}
             <Section title="Genel Bakış">
                 <div className="grid grid-cols-2 gap-3">
-                    <KpiCard icon={ShoppingBag} label="Toplam Sipariş" value={fmt(kpi.totalOrders)} sub={`Son ${range} gün`} color="#6C5CE7" />
+                    <KpiCard icon={ShoppingBag} label="Toplam Sipariş" value={fmt(kpi.totalOrders)} sub={`Son ${range} gün`} color="#732841" />
                     <KpiCard icon={TrendingUp} label="Toplam Ciro" value={fmtCur(kpi.totalRevenue)} sub="İptal hariç" color="#00B894" />
                     <KpiCard icon={ChefHat} label="Ort. Sipariş Değeri" value={fmtCur(kpi.avgOrder)} color="#FDCB6E" />
                     <KpiCard icon={Users} label="Ziyaretçi" value={fmt(kpi.totalVisitors)} sub={`%${kpi.convRate} sipariş verdi`} color="#74B9FF" />
@@ -337,9 +337,9 @@ export default function AnalyticsPage() {
                                 type="monotone"
                                 dataKey="ciro"
                                 name="Ciro"
-                                stroke="#6C5CE7"
+                                stroke="#732841"
                                 strokeWidth={2.5}
-                                dot={{ r: 3, fill: '#6C5CE7' }}
+                                dot={{ r: 3, fill: '#732841' }}
                                 activeDot={{ r: 5 }}
                             />
                         </LineChart>

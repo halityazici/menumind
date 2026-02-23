@@ -155,7 +155,7 @@ export default function BulkImport() {
             {/* Adım 1 — Şablon indir */}
             <div
                 className="rounded-2xl p-5"
-                style={{ background: 'var(--accent-soft)', border: '1.5px solid rgba(108,92,231,0.2)' }}
+                style={{ background: 'var(--accent-soft)', border: '1.5px solid rgba(115,40,65,0.2)' }}
             >
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -178,8 +178,8 @@ export default function BulkImport() {
                         onClick={downloadTemplate}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-white flex-shrink-0"
                         style={{
-                            background: 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
-                            boxShadow: '0 3px 10px rgba(108,92,231,0.3)',
+                            background: 'linear-gradient(135deg, #732841, #5a1f31)',
+                            boxShadow: '0 3px 10px rgba(115,40,65,0.3)',
                         }}
                     >
                         <Download size={15} />
@@ -195,7 +195,7 @@ export default function BulkImport() {
                             className="text-xs px-2.5 py-1 rounded-lg"
                             style={{
                                 background: 'white',
-                                border: '1px solid rgba(108,92,231,0.2)',
+                                border: '1px solid rgba(115,40,65,0.2)',
                                 color: 'var(--text2)',
                                 fontWeight: 500,
                             }}
@@ -284,7 +284,7 @@ export default function BulkImport() {
                             <button
                                 onClick={() => setShowPreview(v => !v)}
                                 className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl"
-                                style={{ color: 'var(--accent)', border: '1px solid rgba(108,92,231,0.2)', background: 'var(--accent-soft)' }}
+                                style={{ color: 'var(--accent)', border: '1px solid rgba(115,40,65,0.2)', background: 'var(--accent-soft)' }}
                             >
                                 <Eye size={12} /> Önizleme
                             </button>
