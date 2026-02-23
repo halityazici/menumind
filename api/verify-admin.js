@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'crypto'
+
 /**
  * Vercel Serverless Function — /api/verify-admin
  * Verifies admin password server-side.
@@ -22,17 +24,22 @@ export default async function handler(req, res) {
     }
 
     // Constant-time comparison to prevent timing attacks
-    const inputBytes = Buffer.from(password)
-    const storedBytes = Buffer.from(adminPassword)
+    try {
+        const inputBytes = Buffer.from(String(password))
+        const storedBytes = Buffer.from(adminPassword)
 
-    if (
-        inputBytes.length === storedBytes.length &&
-        require('crypto').timingSafeEqual(inputBytes, storedBytes)
-    ) {
-        return res.status(200).json({ ok: true })
+        const match =
+            inputBytes.length === storedBytes.length &&
+            timingSafeEqual(inputBytes, storedBytes)
+
+        if (match) {
+            return res.status(200).json({ ok: true })
+        }
+    } catch {
+        // Length mismatch or encoding error → wrong password
     }
 
-    // Deliberate 500ms delay to slow down brute force
-    await new Promise(r => setTimeout(r, 500))
+    // Deliberate 300ms delay to slow down brute force
+    await new Promise(r => setTimeout(r, 300))
     return res.status(401).json({ ok: false, error: 'Invalid password' })
 }
