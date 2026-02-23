@@ -5,8 +5,6 @@ import { Lock, Eye, EyeOff, ChefHat } from 'lucide-react'
 const logoModules = import.meta.glob('../../assets/logo.png', { eager: true, as: 'url' })
 const logoSrc = logoModules['../../assets/logo.png'] ?? null
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123'
-
 
 export default function LoginGuard({ children }) {
     const [authed, setAuthed] = useState(() => sessionStorage.getItem('mm_admin') === '1')
@@ -14,16 +12,41 @@ export default function LoginGuard({ children }) {
     const [showPw, setShowPw] = useState(false)
     const [error, setError] = useState(false)
     const [shake, setShake] = useState(false)
+    const [loading, setLoading] = useState(false)
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault()
-        if (password === ADMIN_PASSWORD) {
-            sessionStorage.setItem('mm_admin', '1')
-            setAuthed(true)
-        } else {
-            setError(true)
-            setShake(true)
-            setTimeout(() => setShake(false), 500)
+        if (!password.trim()) return
+        setLoading(true)
+        setError(false)
+        try {
+            const res = await fetch('/api/verify-admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password }),
+            })
+            const data = await res.json()
+            if (data.ok) {
+                sessionStorage.setItem('mm_admin', '1')
+                setAuthed(true)
+            } else {
+                setError(true)
+                setShake(true)
+                setTimeout(() => setShake(false), 500)
+            }
+        } catch {
+            // Fallback: local check if API unavailable (dev mode)
+            const fallback = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123'
+            if (password === fallback) {
+                sessionStorage.setItem('mm_admin', '1')
+                setAuthed(true)
+            } else {
+                setError(true)
+                setShake(true)
+                setTimeout(() => setShake(false), 500)
+            }
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -195,6 +218,7 @@ export default function LoginGuard({ children }) {
 
                     <button
                         type="submit"
+                        disabled={loading}
                         style={{
                             width: '100%',
                             padding: '16px',
@@ -205,16 +229,16 @@ export default function LoginGuard({ children }) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            background: 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
+                            background: loading ? '#A09FE8' : 'linear-gradient(135deg, #6C5CE7, #5A4DD4)',
                             boxShadow: '0 4px 18px rgba(108,92,231,0.4)',
                             letterSpacing: '0.02em',
                             border: 'none',
-                            cursor: 'pointer',
+                            cursor: loading ? 'not-allowed' : 'pointer',
                             fontFamily: 'Inter, sans-serif',
                             transition: 'transform 0.1s',
                         }}
                     >
-                        Giriş Yap
+                        {loading ? 'Doğrulanıyor...' : 'Giriş Yap'}
                     </button>
                 </form>
             </div>

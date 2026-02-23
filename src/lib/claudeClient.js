@@ -1,4 +1,3 @@
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages'
 const MODEL = 'claude-sonnet-4-5'
 
 /**
@@ -57,39 +56,27 @@ Müşteri sipariş vermek istediğinde, seçtiği ürünleri listele, toplam tut
 }
 
 /**
- * Sends a message to Claude and returns the assistant's text response.
+ * Sends a message to Claude via our secure /api/chat serverless function.
+ * The Anthropic API key never touches the browser.
  * @param {Array}  messages     – [{role:'user'|'assistant', content: string}]
  * @param {Array}  menuItems    – current menu from Supabase
  * @param {string} restaurantName
  * @returns {Promise<string>}
  */
 export async function sendMessageToClaude(messages, menuItems = [], restaurantName = '') {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-    if (!apiKey) throw new Error('VITE_ANTHROPIC_API_KEY is not set in .env')
-
     const systemPrompt = buildSystemPrompt(menuItems, restaurantName)
 
-    const response = await fetch(ANTHROPIC_API, {
+    const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-            model: MODEL,
-            max_tokens: 1024,
-            system: systemPrompt,
-            messages,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, systemPrompt }),
     })
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({}))
-        throw new Error(error?.error?.message || `Claude API error ${response.status}`)
+        throw new Error(error?.error || `Chat API error ${response.status}`)
     }
 
     const data = await response.json()
-    return data.content?.[0]?.text || ''
+    return data.text || ''
 }
