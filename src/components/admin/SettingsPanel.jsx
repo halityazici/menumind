@@ -86,7 +86,7 @@ export default function SettingsPanel() {
                     onClick={handleSave}
                     disabled={saving}
                     className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #7c6af7, #6455e8)', color: 'white' }}
+                    style={{ background: 'linear-gradient(135deg, #732841, #5a1f31)', color: 'white', boxShadow: '0 4px 14px rgba(115,40,65,0.3)' }}
                 >
                     {saving ? (
                         <><Loader2 size={16} className="animate-spin" /> Kaydediliyor...</>
@@ -101,7 +101,7 @@ export default function SettingsPanel() {
             {/* Info card */}
             <div
                 className="rounded-2xl p-4 space-y-2"
-                style={{ background: 'rgba(124,106,247,0.08)', border: '1px solid rgba(124,106,247,0.2)' }}
+                style={{ background: 'rgba(115,40,65,0.07)', border: '1px solid rgba(115,40,65,0.18)' }}
             >
                 <p className="text-xs font-semibold" style={{ color: 'var(--color-accent2)' }}>AI Asistan Hakkında</p>
                 <p className="text-xs leading-relaxed" style={{ color: 'var(--color-muted)' }}>

@@ -38,21 +38,36 @@ const CHART_COLORS = ['#732841', '#00B894', '#FDCB6E', '#E17557', '#74B9FF', '#F
 function KpiCard({ icon: Icon, label, value, sub, color = 'var(--accent)' }) {
     return (
         <div
-            className="rounded-2xl p-4 flex items-start gap-3"
-            style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}
+            style={{
+                borderRadius: '16px',
+                padding: '20px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                gap: '12px',
+                background: 'var(--surface)',
+                border: '1.5px solid var(--border)',
+                boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
+            }}
         >
             <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: `${color}18` }}
+                style={{
+                    width: '44px', height: '44px',
+                    borderRadius: '14px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                    background: `${color}18`,
+                }}
             >
-                <Icon size={18} style={{ color }} />
+                <Icon size={20} style={{ color }} />
             </div>
-            <div className="min-w-0">
-                <p className="text-xs" style={{ color: 'var(--muted)' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5" style={{ fontFamily: 'Poppins', color: 'var(--text)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
+                <p style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'Poppins', color: 'var(--text)', lineHeight: 1.1 }}>
                     {value}
                 </p>
-                {sub && <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{sub}</p>}
+                {sub && <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>{sub}</p>}
             </div>
         </div>
     )
@@ -268,20 +283,30 @@ export default function AnalyticsPage() {
 
             {/* Sipariş durumları */}
             <Section title="Sipariş Durumları">
-                <div className="grid grid-cols-2 gap-2 mb-4">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '16px' }}>
                     {Object.entries(STATUS_LABELS).map(([key, label]) => (
                         <div
                             key={key}
-                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
-                            style={{ background: 'var(--surface)', border: '1.5px solid var(--border)' }}
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '16px 12px',
+                                borderRadius: '14px',
+                                textAlign: 'center',
+                                gap: '6px',
+                                background: 'var(--surface)',
+                                border: '1.5px solid var(--border)',
+                            }}
                         >
-                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: STATUS_COLORS[key] }} />
-                            <div className="min-w-0">
-                                <p className="text-xs" style={{ color: 'var(--muted)' }}>{label}</p>
-                                <p className="text-base font-bold" style={{ color: 'var(--text)', fontFamily: 'Poppins' }}>
-                                    {fmt(data.statusTotals[key] || 0)}
-                                </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0, background: STATUS_COLORS[key] }} />
+                                <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
                             </div>
+                            <p style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text)', fontFamily: 'Poppins', lineHeight: 1 }}>
+                                {fmt(data.statusTotals[key] || 0)}
+                            </p>
                         </div>
                     ))}
                 </div>
@@ -424,28 +449,38 @@ export default function AnalyticsPage() {
                         </ResponsiveContainer>
                     )}
                 </div>
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                     <div
-                        className="px-4 py-3 rounded-2xl"
-                        style={{ background: 'var(--surface)', border: '1.5px solid var(--border)' }}
+                        style={{
+                            padding: '16px',
+                            borderRadius: '16px',
+                            textAlign: 'center',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+                            background: 'var(--surface)', border: '1.5px solid var(--border)',
+                        }}
                     >
-                        <p className="text-xs" style={{ color: 'var(--muted)' }}>Sipariş Veren</p>
-                        <p className="text-lg font-bold mt-0.5" style={{ color: '#00B894', fontFamily: 'Poppins' }}>
+                        <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Sipariş Veren</p>
+                        <p style={{ fontSize: '28px', fontWeight: 800, color: '#00B894', fontFamily: 'Poppins', lineHeight: 1 }}>
                             {fmt(data.statusTotals['new'] || 0 + data.statusTotals['preparing'] || 0 + data.statusTotals['delivered'] || 0)}
                         </p>
-                        <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: 'var(--muted)' }}>
+                        <p style={{ fontSize: '11px', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <CheckCircle size={11} style={{ color: '#00B894' }} /> müşteri
                         </p>
                     </div>
                     <div
-                        className="px-4 py-3 rounded-2xl"
-                        style={{ background: 'var(--surface)', border: '1.5px solid var(--border)' }}
+                        style={{
+                            padding: '16px',
+                            borderRadius: '16px',
+                            textAlign: 'center',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+                            background: 'var(--surface)', border: '1.5px solid var(--border)',
+                        }}
                     >
-                        <p className="text-xs" style={{ color: 'var(--muted)' }}>İptal Edilen</p>
-                        <p className="text-lg font-bold mt-0.5" style={{ color: '#E17557', fontFamily: 'Poppins' }}>
+                        <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>İptal Edilen</p>
+                        <p style={{ fontSize: '28px', fontWeight: 800, color: '#E17557', fontFamily: 'Poppins', lineHeight: 1 }}>
                             {fmt(data.statusTotals['cancelled'] || 0)}
                         </p>
-                        <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: 'var(--muted)' }}>
+                        <p style={{ fontSize: '11px', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <XCircle size={11} style={{ color: '#E17557' }} /> sipariş
                         </p>
                     </div>
