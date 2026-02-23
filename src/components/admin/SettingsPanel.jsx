@@ -17,7 +17,7 @@ const FIELDS = [
         placeholder: 'Merhaba! Ben sizin yapay zeka destekli menü asistanınızım 🍽️✨ Size bugün ne önerebilirim?',
         type: 'textarea',
         icon: MessageSquare,
-        desc: 'Müşteri chat penceresini açtığında AI'nın söylediği ilk mesaj',
+        desc: "Müşteri chat penceresini açtığında AI'nın söylediği ilk mesaj",
     },
     {
         key: 'telegram_chat_id',
@@ -25,7 +25,7 @@ const FIELDS = [
         placeholder: '-1001234567890',
         type: 'text',
         icon: Send,
-        desc: 'Yeni sipariş bildirimlerinin gönderileceği grup veya kanal ID'si',
+        desc: "Yeni sipariş bildirimlerinin gönderileceği grup veya kanal ID'si",
     },
 ]
 
