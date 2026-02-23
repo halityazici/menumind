@@ -4,13 +4,15 @@ import { useMenu } from '../../hooks/useMenu'
 import { uploadMenuImage } from '../../lib/supabaseClient'
 import noImage from '../../assets/no-image.png'
 
-const CATEGORIES = ['Başlangıçlar', 'Çorbalar', 'Ana Yemekler', 'Tatlılar', 'İçecekler', 'Diğer']
+const DEFAULT_CATEGORIES = ['Başlangıçlar', 'Çorbalar', 'Ana Yemekler', 'Tatlılar', 'İçecekler', 'Diğer']
 const ALLERGEN_OPTIONS = ['Gluten', 'Süt', 'Yumurta', 'Balık', 'Kabuklu Deniz Ürünleri', 'Yer Fıstığı', 'Fındık', 'Soya', 'Kereviz', 'Susam']
 
 const EMPTY_FORM = { name: '', description: '', price: '', category: 'Ana Yemekler', allergens: [], is_available: true, image_url: '' }
 
 /* ── Slide-over modal: Yeni Ürün Ekle / Düzenle ──────────────── */
-function ItemEditModal({ form, setForm, onSave, onClose, saving, imgUploading, imgPreview, onImageUpload, onImageRemove, imgInputRef, isEditing }) {
+function ItemEditModal({ form, setForm, onSave, onClose, saving, imgUploading, imgPreview, onImageUpload, onImageRemove, imgInputRef, isEditing, categories }) {
+    const [customCat, setCustomCat] = useState('')
+    const [showCustom, setShowCustom] = useState(false)
     return (
         <div
             className="fixed inset-0 z-[70] flex items-end justify-center"
@@ -176,8 +178,16 @@ function ItemEditModal({ form, setForm, onSave, onClose, saving, imgUploading, i
                         <div style={{ flex: 1 }}>
                             <p style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px', color: 'var(--text2)' }}>Kategori</p>
                             <select
-                                value={form.category}
-                                onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                                value={showCustom ? '__custom__' : form.category}
+                                onChange={e => {
+                                    if (e.target.value === '__custom__') {
+                                        setShowCustom(true)
+                                        setCustomCat('')
+                                    } else {
+                                        setShowCustom(false)
+                                        setForm(f => ({ ...f, category: e.target.value }))
+                                    }
+                                }}
                                 style={{
                                     width: '100%',
                                     padding: '12px 14px',
@@ -192,8 +202,33 @@ function ItemEditModal({ form, setForm, onSave, onClose, saving, imgUploading, i
                                     appearance: 'auto',
                                 }}
                             >
-                                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                <option value="__custom__">+ Yeni kategori...</option>
                             </select>
+                            {showCustom && (
+                                <input
+                                    autoFocus
+                                    placeholder="Kategori adını yazın"
+                                    value={customCat}
+                                    onChange={e => {
+                                        setCustomCat(e.target.value)
+                                        setForm(f => ({ ...f, category: e.target.value }))
+                                    }}
+                                    style={{
+                                        marginTop: '8px',
+                                        width: '100%',
+                                        padding: '10px 14px',
+                                        borderRadius: '10px',
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        boxSizing: 'border-box',
+                                        background: 'var(--accent-soft)',
+                                        border: '1.5px solid rgba(115,40,65,0.4)',
+                                        color: 'var(--text)',
+                                        fontFamily: 'Inter, sans-serif',
+                                    }}
+                                />
+                            )}
                         </div>
                     </div>
 
@@ -330,6 +365,14 @@ export default function MenuManager() {
         return acc
     }, {})
 
+    // Dinamik kategori listesi: DB'deki mevcut kategoriler + default kategoriler
+    const dynamicCategories = [
+        ...new Set([
+            ...menuItems.map(i => i.category).filter(Boolean),
+            ...DEFAULT_CATEGORIES,
+        ])
+    ]
+
     const openNew = () => {
         setForm(EMPTY_FORM)
         setImgPreview(null)
@@ -421,6 +464,7 @@ export default function MenuManager() {
                     onImageRemove={() => { setImgPreview(null); setForm(f => ({ ...f, image_url: '' })) }}
                     imgInputRef={imgInputRef}
                     isEditing={editingId !== 'new'}
+                    categories={dynamicCategories}
                 />
             )}
 
