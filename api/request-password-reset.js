@@ -17,95 +17,97 @@ const RATE_LIMIT = 3          // 3 istek / 15 dakika (abuse koruması)
 const RATE_WINDOW_MS = 15 * 60_000
 
 function checkRateLimit(key) {
-    const now = Date.now()
-    const rec = rateLimitMap.get(key)
-    if (!rec || now > rec.resetAt) {
-        rateLimitMap.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS })
-        return true
-    }
-    if (rec.count >= RATE_LIMIT) return false
-    rec.count++
+  const now = Date.now()
+  const rec = rateLimitMap.get(key)
+  if (!rec || now > rec.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS })
     return true
+  }
+  if (rec.count >= RATE_LIMIT) return false
+  rec.count++
+  return true
 }
 
 function pruneMap() {
-    const now = Date.now()
-    for (const [k, rec] of rateLimitMap) {
-        if (now > rec.resetAt) rateLimitMap.delete(k)
-    }
+  const now = Date.now()
+  for (const [k, rec] of rateLimitMap) {
+    if (now > rec.resetAt) rateLimitMap.delete(k)
+  }
 }
 
 export default async function handler(req, res) {
-    const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || 'https://themenumind.com')
-        .split(',').map(o => o.trim())
-    const requestOrigin = req.headers.origin || ''
-    const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0]
-    res.setHeader('Access-Control-Allow-Origin', corsOrigin)
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-    res.setHeader('Vary', 'Origin')
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || 'https://themenumind.com')
+    .split(',').map(o => o.trim())
+  const requestOrigin = req.headers.origin || ''
+  const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0]
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin)
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Vary', 'Origin')
 
-    if (req.method === 'OPTIONS') return res.status(200).end()
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' })
+  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' })
 
-    pruneMap()
-    const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim()
-    if (!checkRateLimit(ip)) {
-        return res.status(429).json({ error: 'Çok fazla istek. 15 dakika bekleyiniz.' })
-    }
+  pruneMap()
+  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim()
+  if (!checkRateLimit(ip)) {
+    return res.status(429).json({ error: 'Çok fazla istek. 15 dakika bekleyiniz.' })
+  }
 
-    const supabaseUrl = process.env.SUPABASE_URL
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const resendKey = process.env.RESEND_API_KEY
+  const supabaseUrl = process.env.SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const resendKey = process.env.RESEND_API_KEY
 
-    if (!supabaseUrl || !serviceRoleKey || !resendKey) {
-        console.error('Missing env vars: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / RESEND_API_KEY')
-        return res.status(500).json({ error: 'Sunucu yapılandırma hatası.' })
-    }
+  if (!supabaseUrl || !serviceRoleKey || !resendKey) {
+    console.error('Missing env vars: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / RESEND_API_KEY')
+    return res.status(500).json({ error: 'Sunucu yapılandırma hatası.' })
+  }
 
-    const { email, redirectTo } = req.body || {}
+  const { email } = req.body || {}
+  // redirect_to her zaman /admin — client değerini yoksay
+  const redirectUrl = `${process.env.SITE_URL || 'https://www.themenumind.com'}/admin`
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return res.status(400).json({ error: 'Geçersiz e-posta adresi.' })
-    }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Geçersiz e-posta adresi.' })
+  }
 
-    // ── 1. Supabase Admin API ile recovery link üret ──────────────
-    const generateRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'apikey': serviceRoleKey,
-            'Authorization': `Bearer ${serviceRoleKey}`,
-        },
-        body: JSON.stringify({
-            type: 'recovery',
-            email,
-            options: {
-                redirect_to: redirectTo || 'https://www.themenumind.com/admin',
-            },
-        }),
-    })
+  // ── 1. Supabase Admin API ile recovery link üret ──────────────
+  const generateRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': serviceRoleKey,
+      'Authorization': `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({
+      type: 'recovery',
+      email,
+      options: {
+        redirect_to: redirectUrl,
+      },
+    }),
+  })
 
-    const generateData = await generateRes.json()
+  const generateData = await generateRes.json()
 
-    if (!generateRes.ok) {
-        console.error('Supabase generate_link error:', generateData)
-        // Kullanıcıya email kayıtlı değil bilgisini verme (güvenlik)
-        // Başarılı gibi davran ama mail gönderme
-        return res.status(200).json({ ok: true })
-    }
+  if (!generateRes.ok) {
+    console.error('Supabase generate_link error:', generateData)
+    // Kullanıcıya email kayıtlı değil bilgisini verme (güvenlik)
+    // Başarılı gibi davran ama mail gönderme
+    return res.status(200).json({ ok: true })
+  }
 
-    const actionLink = generateData.action_link || generateData.properties?.action_link
-    if (!actionLink) {
-        console.error('No action_link in response:', generateData)
-        return res.status(200).json({ ok: true }) // güvenlik: sussak geç
-    }
+  const actionLink = generateData.action_link || generateData.properties?.action_link
+  if (!actionLink) {
+    console.error('No action_link in response:', generateData)
+    return res.status(200).json({ ok: true }) // güvenlik: sussak geç
+  }
 
-    // ── 2. Resend ile branded mail gönder ────────────────────────
-    const fromAddress = process.env.RESEND_FROM_EMAIL || 'MenuMind <noreply@themenumind.com>'
-    const year = new Date().getFullYear()
+  // ── 2. Resend ile branded mail gönder ────────────────────────
+  const fromAddress = process.env.RESEND_FROM_EMAIL || 'MenuMind <noreply@themenumind.com>'
+  const year = new Date().getFullYear()
 
-    const html = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
@@ -160,17 +162,17 @@ export default async function handler(req, res) {
 </body>
 </html>`
 
-    const mailRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: fromAddress, to: email, subject: 'MenuMind — Şifre Sıfırlama', html }),
-    })
+  const mailRes = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: fromAddress, to: email, subject: 'MenuMind — Şifre Sıfırlama', html }),
+  })
 
-    if (!mailRes.ok) {
-        const mailErr = await mailRes.json().catch(() => ({}))
-        console.error('Resend error:', mailErr)
-        return res.status(502).json({ error: 'E-posta gönderilemedi. Lütfen tekrar deneyin.' })
-    }
+  if (!mailRes.ok) {
+    const mailErr = await mailRes.json().catch(() => ({}))
+    console.error('Resend error:', mailErr)
+    return res.status(502).json({ error: 'E-posta gönderilemedi. Lütfen tekrar deneyin.' })
+  }
 
-    return res.status(200).json({ ok: true })
+  return res.status(200).json({ ok: true })
 }
