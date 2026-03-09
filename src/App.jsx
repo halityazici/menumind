@@ -1,10 +1,34 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { ChefHat, Sparkles, Star, Clock, Shield } from 'lucide-react'
 import ChatPage from './pages/ChatPage'
 import AdminPage from './pages/AdminPage'
 
 const logoModules = import.meta.glob('./assets/logo.png', { eager: true, as: 'url' })
 const logoSrc = logoModules['./assets/logo.png'] ?? null
+
+/**
+ * Supabase auth hash'lerini (recovery, error) yakalar ve /admin'e yönlendirir.
+ * Bu olmadan sıfırlama linkleri müşteri sayfasında kalır.
+ */
+function AuthHashRedirect() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    const hash = location.hash
+    if (!hash) return
+    // Supabase recovery veya hata fragmenti → admin'e yönlendir
+    if (hash.includes('type=recovery') || hash.includes('error=') || hash.includes('access_token=')) {
+      // Sadece customer page'deyken → /admin'e taşı
+      if (location.pathname === '/' || location.pathname === '') {
+        navigate(`/admin${hash}`, { replace: true })
+      }
+    }
+  }, [location, navigate])
+
+  return null
+}
 
 const FEATURES = [
   {
@@ -206,6 +230,7 @@ function ChatLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthHashRedirect />
       <Routes>
         <Route path="/" element={<ChatLayout />} />
         <Route path="/admin" element={<AdminPage />} />

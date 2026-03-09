@@ -212,11 +212,11 @@ function LoginView({ onForgot }) {
 /* ═══════════════════════════════════════════════════════════════
    VIEW 2: Şifremi Unuttum
 ═══════════════════════════════════════════════════════════════ */
-function ForgotView({ onBack }) {
+function ForgotView({ onBack, initialError = '' }) {
     const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
     const [sent, setSent] = useState(false)
-    const [error, setError] = useState('')
+    const [error, setError] = useState(initialError)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -438,19 +438,39 @@ function ResetView({ onDone }) {
 ═══════════════════════════════════════════════════════════════ */
 export default function LoginGuard({ children }) {
     const [session, setSession] = useState(undefined)
+    const [authError, setAuthError] = useState('')
+
     // URL hash'ten senkronize başlat — async race condition'ı önler
     const [view, setView] = useState(() => {
         if (typeof window !== 'undefined') {
             const hash = window.location.hash
             if (hash.includes('type=recovery')) return 'reset'
+            if (hash.includes('error=')) return 'error' // hata hash'i → login'e yönlendir
         }
         return 'login'
     })
 
     useEffect(() => {
-        // Recovery hash varsa temizle (refresh sonrası formun tekrar açılmasını önle)
-        if (window.location.hash.includes('type=recovery')) {
-            // Hash'i Supabase işledikten sonra temizle
+        const hash = window.location.hash
+
+        // Supabase hata hash'i varsa Türkçe hata mesajı üret
+        if (hash.includes('error=')) {
+            const params = new URLSearchParams(hash.replace('#', '?'))
+            const code = params.get('error_code') || params.get('error') || ''
+            const desc = params.get('error_description') || ''
+            if (code.includes('otp_expired') || desc.toLowerCase().includes('expired') || desc.toLowerCase().includes('invalid')) {
+                setAuthError('Sıfırlama linki süresi dolmuş veya geçersiz. Lütfen yeni bir link talep edin.')
+            } else if (code.includes('access_denied')) {
+                setAuthError('Erişim reddedildi. Lütfen yeniden şifre sıfırlama talebinde bulunun.')
+            } else {
+                setAuthError('Bir hata oluştu. Lütfen tekrar deneyin.')
+            }
+            setView('forgot') // Hata varsa şifremi unuttum ekranına at
+            window.history.replaceState(null, '', window.location.pathname)
+        }
+
+        // Recovery hash varsa temizle
+        if (hash.includes('type=recovery')) {
             setTimeout(() => {
                 window.history.replaceState(null, '', window.location.pathname)
             }, 500)
@@ -492,7 +512,7 @@ export default function LoginGuard({ children }) {
             {/* Kart */}
             <div style={{ width: '100%', maxWidth: '420px', position: 'relative' }}>
                 {view === 'login' && <LoginView onForgot={() => setView('forgot')} />}
-                {view === 'forgot' && <ForgotView onBack={() => setView('login')} />}
+                {view === 'forgot' && <ForgotView onBack={() => setView('login')} initialError={authError} />}
                 {view === 'reset' && <ResetView onDone={handleLogout} />}
             </div>
 
