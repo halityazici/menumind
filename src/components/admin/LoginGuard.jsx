@@ -225,16 +225,26 @@ function ForgotView({ onBack }) {
         setError('')
 
         const redirectTo = `${window.location.origin}/admin`
-        const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo })
 
-        if (authError) {
+        try {
+            const res = await fetch('/api/request-password-reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email.trim(), redirectTo }),
+            })
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}))
+                setError(data.error || 'E-posta gönderilemedi. Lütfen tekrar deneyin.')
+                setLoading(false)
+                return
+            }
+        } catch {
+            setError('Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.')
             setLoading(false)
-            setError('E-posta gönderilemedi. E-posta adresinizi kontrol edin.')
             return
         }
 
-        // Resend ile branded mail gönder (arka planda, hata olsa bile devam)
-        await sendResetEmail(email.trim(), redirectTo)
         setLoading(false)
         setSent(true)
     }
