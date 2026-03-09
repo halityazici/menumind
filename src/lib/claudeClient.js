@@ -1,7 +1,9 @@
 /**
  * Calls Claude API.
  * - Production (Vercel): proxied through /api/chat serverless function.
- * - Local dev: calls Anthropic directly via VITE_ANTHROPIC_API_KEY.
+ *   ANTHROPIC_API_KEY yaşar ONLY on the server (no VITE_ prefix).
+ * - Local dev only: VITE_ANTHROPIC_API_KEY ile doğrudan çağrı yapılır.
+ *   Bu key production .env'de OLMAMALI — JS bundle'a gömülür.
  *
  * Dayanıklılık:
  *  - Exponential backoff ile 2 otomatik yeniden deneme (429 / 5xx)
@@ -9,9 +11,14 @@
  *  - Mesaj geçmişi son 20 ile sınırlı — payload şişmesini önler
  */
 
-const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
+// Sadece local dev'de API key'i oku — production bundle'a gömülmesin
+const _isLocalDev = typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+const API_KEY = _isLocalDev ? import.meta.env.VITE_ANTHROPIC_API_KEY : undefined
+
 const MAX_HISTORY = 20   // Claude'a gönderilen max mesaj sayısı
 const TIMEOUT_MS = 25_000
+
 
 /* ── Exponential backoff sleep ───────────────────────────────────── */
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
