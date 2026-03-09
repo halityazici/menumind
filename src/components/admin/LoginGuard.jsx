@@ -428,14 +428,28 @@ function ResetView({ onDone }) {
 ═══════════════════════════════════════════════════════════════ */
 export default function LoginGuard({ children }) {
     const [session, setSession] = useState(undefined)
-    const [view, setView] = useState('login')   // 'login' | 'forgot' | 'reset'
+    // URL hash'ten senkronize başlat — async race condition'ı önler
+    const [view, setView] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const hash = window.location.hash
+            if (hash.includes('type=recovery')) return 'reset'
+        }
+        return 'login'
+    })
 
     useEffect(() => {
+        // Recovery hash varsa temizle (refresh sonrası formun tekrar açılmasını önle)
+        if (window.location.hash.includes('type=recovery')) {
+            // Hash'i Supabase işledikten sonra temizle
+            setTimeout(() => {
+                window.history.replaceState(null, '', window.location.pathname)
+            }, 500)
+        }
+
         supabase.auth.getSession().then(({ data }) => setSession(data.session))
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
             setSession(s)
-            // Kullanıcı şifre sıfırlama linkine tıkladıysa → reset formunu göster
             if (event === 'PASSWORD_RECOVERY') {
                 setView('reset')
             }
