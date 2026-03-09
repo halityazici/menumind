@@ -180,7 +180,7 @@ function ChatLayout() {
 
         {/* ── Alt ── */}
         <p style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.30)', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
-          © 2025 MenuMind · Tüm hakları saklıdır
+          © 2025 MenuMind · Tüm hakları saklıdır · <a href="mailto:info@themenumind.com" style={{ color: 'rgba(255,255,255,0.30)', textDecoration: 'none' }}>info@themenumind.com</a>
         </p>
       </div>
 
