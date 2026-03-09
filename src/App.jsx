@@ -3,7 +3,6 @@ import { ChefHat, Sparkles, Star, Clock, Shield } from 'lucide-react'
 import ChatPage from './pages/ChatPage'
 import AdminPage from './pages/AdminPage'
 
-// Özel logo — src/assets/logo.png varsa kullan
 const logoModules = import.meta.glob('./assets/logo.png', { eager: true, as: 'url' })
 const logoSrc = logoModules['./assets/logo.png'] ?? null
 
@@ -11,154 +10,166 @@ const FEATURES = [
   {
     icon: Sparkles,
     title: 'Kişisel Öneri',
-    desc: 'Zevkinize ve tercihlerinize göre en uygun yemekleri önerir.',
+    desc: 'Zevkinize ve tercihlerinize göre yemek önerir.',
   },
   {
     icon: Shield,
     title: 'Alerjen Bilgisi',
-    desc: 'Tüm ürünlerin içerik ve alerjen bilgilerini anında sunar.',
+    desc: 'İçerik ve alerjen bilgilerini anında sunar.',
   },
   {
     icon: Clock,
     title: 'Hızlı Sipariş',
-    desc: 'Sohbet ederek birkaç adımda siparişinizi tamamlayın.',
+    desc: 'Sohbet ederek siparişinizi kolayca verin.',
   },
   {
     icon: Star,
     title: '7/24 Aktif',
-    desc: 'Gece gündüz her an masanızda hazır, beklemeden yanıt.',
+    desc: 'Her an masanızda hazır, beklemeden yanıt.',
   },
 ]
 
-/* ── Masaüstü: Sol panel + sağda chat paneli ── */
 function ChatLayout() {
   return (
     <div style={{ display: 'flex', height: '100%', background: 'var(--bg)' }}>
 
-      {/* Sol branding paneli — sadece md+ ekranda görünür */}
+      {/* ── Sol Branding Paneli ── sadece md+ ekranda ── */}
       <div
         className="hidden md:flex"
         style={{
           flex: 1,
           flexDirection: 'column',
           justifyContent: 'space-between',
-          padding: '48px',
-          background: 'linear-gradient(160deg, #732841 0%, #5a1f31 60%, #4a1828 100%)',
+          padding: '44px 52px',
+          background: 'linear-gradient(155deg, #7B2D45 0%, #5C1F31 55%, #3E1020 100%)',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* Logo üst */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {/* Dekoratif arka plan lekesi */}
+        <div style={{
+          position: 'absolute', top: '-80px', right: '-80px',
+          width: '380px', height: '380px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-60px', left: '-60px',
+          width: '280px', height: '280px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* ── Logo / Marka ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', position: 'relative' }}>
           <div
             style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              flexShrink: 0,
-              background: 'rgba(255,255,255,0.18)',
-              border: '2px solid rgba(255,255,255,0.35)',
-              boxShadow: '0 3px 12px rgba(0,0,0,0.2)',
+              width: '48px', height: '48px',
+              borderRadius: '14px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden', flexShrink: 0,
+              background: 'rgba(255,255,255,0.15)',
+              border: '1.5px solid rgba(255,255,255,0.25)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
             }}
           >
             {logoSrc
-              ? <img src={logoSrc} alt="MenuMind" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <ChefHat size={24} color="white" />
+              ? <img src={logoSrc} alt="MenuMind" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <ChefHat size={22} color="white" />
             }
           </div>
           <div>
-            <p style={{ fontWeight: 700, fontSize: '18px', color: 'white', fontFamily: 'Poppins', lineHeight: 1.2 }}>
+            <p style={{ fontWeight: 700, fontSize: '17px', color: 'white', fontFamily: 'Poppins', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
               MenuMind
             </p>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginTop: '2px', fontFamily: 'Inter, sans-serif' }}>
               AI Menü Asistanı
             </p>
           </div>
         </div>
 
-        {/* Orta içerik — tam dikey ortalı */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        {/* ── Orta — Başlık + Kartlar ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '36px', position: 'relative' }}>
+
+          {/* Başlık bloğu */}
           <div>
-            <h2
-              style={{
-                fontSize: '42px',
-                fontWeight: 800,
-                color: 'white',
-                lineHeight: 1.15,
-                fontFamily: 'Poppins',
-                letterSpacing: '-0.02em',
-              }}
-            >
+            {/* Küçük etiket */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '7px',
+              padding: '5px 12px', borderRadius: '100px',
+              background: 'rgba(255,255,255,0.10)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              marginBottom: '20px',
+            }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34D399', display: 'block', boxShadow: '0 0 6px rgba(52,211,153,0.6)' }} />
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.80)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                Yapay Zeka Destekli
+              </span>
+            </div>
+
+            <h2 style={{
+              fontSize: '44px',
+              fontWeight: 800,
+              color: 'white',
+              lineHeight: 1.12,
+              fontFamily: 'Poppins',
+              letterSpacing: '-0.03em',
+            }}>
               Yapay Zekâ ile<br />Menü Deneyimi
             </h2>
-            <p
-              style={{
-                marginTop: '16px',
-                fontSize: '16px',
-                color: 'rgba(255,255,255,0.72)',
-                lineHeight: 1.75,
-                fontFamily: 'Inter, sans-serif',
-                maxWidth: '460px',
-              }}
-            >
-              Garson, size restoran menüsünü tanıtır, alerjenleri açıklar ve
+            <p style={{
+              marginTop: '18px',
+              fontSize: '15.5px',
+              color: 'rgba(255,255,255,0.65)',
+              lineHeight: 1.75,
+              fontFamily: 'Inter, sans-serif',
+              maxWidth: '420px',
+            }}>
+              Garson, menünüzü tanıtır, alerjenleri açıklar ve
               siparişinizi almanıza yardımcı olur.
             </p>
           </div>
 
           {/* Feature cards — 2×2 grid */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '12px',
-              maxWidth: '560px',
-            }}
-          >
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '10px',
+            maxWidth: '540px',
+          }}>
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '14px',
+                  alignItems: 'flex-start',
+                  gap: '12px',
                   padding: '16px 18px',
-                  borderRadius: '18px',
-                  background: 'rgba(255,255,255,0.10)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  borderLeft: '3px solid rgba(255,255,255,0.35)',
-                  backdropFilter: 'blur(10px)',
+                  borderRadius: '16px',
+                  background: 'rgba(255,255,255,0.07)',
+                  border: '1px solid rgba(255,255,255,0.10)',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'background 0.2s',
                 }}
               >
-                <div
-                  style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    background: 'rgba(255,255,255,0.18)',
-                  }}
-                >
-                  <Icon size={18} color="white" />
+                <div style={{
+                  width: '36px', height: '36px',
+                  borderRadius: '10px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                  background: 'rgba(255,255,255,0.14)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                }}>
+                  <Icon size={16} color="white" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 700, fontSize: '14px', color: 'white', fontFamily: 'Inter, sans-serif' }}>
+                  <p style={{ fontWeight: 600, fontSize: '13px', color: 'white', fontFamily: 'Inter, sans-serif', lineHeight: 1.3 }}>
                     {title}
                   </p>
-                  <p
-                    style={{
-                      fontSize: '12px',
-                      marginTop: '4px',
-                      lineHeight: 1.55,
-                      color: 'rgba(255,255,255,0.62)',
-                      fontFamily: 'Inter, sans-serif',
-                    }}
-                  >
+                  <p style={{
+                    fontSize: '12px', marginTop: '4px', lineHeight: 1.55,
+                    color: 'rgba(255,255,255,0.55)', fontFamily: 'Inter, sans-serif',
+                  }}>
                     {desc}
                   </p>
                 </div>
@@ -167,23 +178,23 @@ function ChatLayout() {
           </div>
         </div>
 
-        {/* Alt */}
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.38)', fontFamily: 'Inter, sans-serif' }}>
+        {/* ── Alt ── */}
+        <p style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.30)', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
           © 2025 MenuMind · Tüm hakları saklıdır
         </p>
       </div>
 
-      {/* Sohbet alanı */}
+      {/* ── Sohbet Alanı ── */}
       <div
         style={{
           width: '100%',
-          maxWidth: '430px',
+          maxWidth: '440px',
           flexShrink: 0,
-          borderLeft: '1px solid rgba(0,0,0,0.07)',
+          borderLeft: '1px solid rgba(0,0,0,0.06)',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--bg)',
-          boxShadow: '-8px 0 32px rgba(0,0,0,0.08)',
+          background: 'var(--surface)',
+          boxShadow: '-12px 0 40px rgba(0,0,0,0.08)',
         }}
       >
         <ChatPage />

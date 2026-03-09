@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchMenu, fetchSettings, insertOrder, supabase } from '../lib/supabaseClient'
+import { fetchAllMenu, fetchSettings, insertOrder, supabase } from '../lib/supabaseClient'
 
 export function useMenu() {
     const [menuItems, setMenuItems] = useState([])
@@ -11,7 +11,7 @@ export function useMenu() {
     const loadData = useCallback(async () => {
         setLoading(true)
         try {
-            const [menu, sett] = await Promise.all([fetchMenu(), fetchSettings()])
+            const [menu, sett] = await Promise.all([fetchAllMenu(), fetchSettings()])
             setMenuItems(menu)
             setSettings(sett)
         } catch (err) {

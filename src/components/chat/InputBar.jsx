@@ -4,6 +4,7 @@ import { Send } from 'lucide-react'
 export default function InputBar({ onSend, isLoading, disabled }) {
     const [text, setText] = useState('')
     const textareaRef = useRef(null)
+    const [focused, setFocused] = useState(false)
 
     useEffect(() => {
         if (textareaRef.current) {
@@ -28,69 +29,81 @@ export default function InputBar({ onSend, isLoading, disabled }) {
     }
 
     const canSend = text.trim() && !isLoading && !disabled
+    const isActive = focused || canSend
 
     return (
         <div style={{
+            padding: '10px 14px 16px',
             background: 'var(--surface)',
-            paddingLeft: '16px',
-            paddingRight: '16px',
-            paddingBottom: '20px',
-            paddingTop: '10px',
         }}>
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    gap: '10px',
-                    borderRadius: '20px',
-                    paddingLeft: '16px',
-                    paddingRight: '12px',
-                    paddingTop: '12px',
-                    paddingBottom: '12px',
-                    background: 'var(--bg2)',
-                    border: `1.5px solid ${canSend ? 'var(--accent)' : 'var(--border)'}`,
-                    boxShadow: canSend ? '0 0 0 3px rgba(115,40,65,0.08)' : 'none',
-                    transition: 'border-color 0.2s, box-shadow 0.2s',
-                }}
-            >
+            <div style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: '8px',
+                borderRadius: '16px',
+                padding: '10px 10px 10px 16px',
+                background: 'var(--bg)',
+                border: `1.5px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
+                boxShadow: isActive ? '0 0 0 3px var(--accent-glow)' : 'none',
+                transition: 'border-color 0.18s, box-shadow 0.18s',
+            }}>
                 <textarea
                     ref={textareaRef}
                     value={text}
                     onChange={e => setText(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={disabled ? 'Yükleniyor...' : isLoading ? 'Garson yazıyor...' : 'Bir şey sorun...'}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    placeholder={
+                        disabled ? 'Yükleniyor...'
+                            : isLoading ? 'Garson yazıyor...'
+                                : 'Bir şey sorun...'
+                    }
                     disabled={isLoading || disabled}
                     rows={1}
-                    className="flex-1 bg-transparent resize-none outline-none"
                     style={{
+                        flex: 1,
+                        background: 'transparent',
+                        resize: 'none',
+                        outline: 'none',
+                        border: 'none',
                         color: 'var(--text)',
-                        lineHeight: '1.6',
+                        lineHeight: '1.60',
                         fontFamily: 'Inter, sans-serif',
-                        fontSize: '15px',
+                        fontSize: '14.5px',
                         padding: '2px 0',
                     }}
                 />
                 <button
                     onClick={handleSubmit}
                     disabled={!canSend}
-                    className="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center"
                     style={{
+                        flexShrink: 0,
+                        width: '36px', height: '36px',
+                        borderRadius: '11px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: canSend
-                            ? 'linear-gradient(135deg, #732841, #5a1f31)'
+                            ? 'linear-gradient(135deg, #7B2D45, #5C1F31)'
                             : 'var(--border)',
-                        boxShadow: canSend ? '0 2px 10px rgba(115,40,65,0.35)' : 'none',
+                        boxShadow: canSend ? 'var(--shadow-accent)' : 'none',
+                        border: 'none',
                         cursor: canSend ? 'pointer' : 'not-allowed',
-                        transition: 'all 0.2s',
-                        transform: canSend ? 'scale(1)' : 'scale(0.9)',
+                        transition: 'all 0.18s cubic-bezier(0.22,1,0.36,1)',
+                        transform: canSend ? 'scale(1)' : 'scale(0.88)',
                     }}
                 >
-                    <Send size={16} style={{ color: 'white', transform: 'translateX(1px)' }} />
+                    <Send size={14} style={{ color: 'white', transform: 'translateX(1px)' }} />
                 </button>
             </div>
-            <p
-                className="text-center mt-2"
-                style={{ color: 'var(--muted)', fontSize: '10px', opacity: 0.7 }}
-            >
+
+            <p style={{
+                textAlign: 'center',
+                marginTop: '7px',
+                fontSize: '10.5px',
+                color: 'var(--muted)',
+                opacity: 0.65,
+                fontFamily: 'Inter, sans-serif',
+            }}>
                 Enter ile gönder · Shift+Enter yeni satır
             </p>
         </div>

@@ -2,7 +2,8 @@ import { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import {
     Download, Upload, CheckCircle, AlertCircle,
-    X, FileSpreadsheet, Loader2, ChevronDown, ChevronUp, Trash2
+    X, FileSpreadsheet, Loader2, ChevronDown, ChevronUp, Trash2,
+    AlertTriangle, SkipForward, RefreshCw
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 
@@ -27,17 +28,26 @@ function downloadTemplate() {
     XLSX.writeFile(wb, 'MenuMind_Menu_Sablonu.xlsx')
 }
 
-/* ── Row parser ──────────────────────────────────────────── */
+/* ── Row parser ────────────────────────────────────────────── */
 function parseRow(row) {
     const get = (label) => {
         const col = COLUMNS.find(c => c.label === label)
         const val = col ? row[col.label] : undefined
-        return val !== undefined && val !== null && val !== '' ? String(val).trim() : null
+        if (val === undefined || val === null) return null
+        const trimmed = String(val).trim()
+        return trimmed !== '' ? trimmed : null
     }
     const name = get('Ürün Adı')
+
+    // Ürün adı yoksa — boş ya da görünmez içerikli satır, sessizce atla
+    if (!name) return { empty: true }
+
+    // Adı var ama diğer zorunlular eksik — gerçek hata
     const category = get('Kategori')
-    const price = parseFloat(get('Fiyat (₺)') || '0')
-    if (!name || !category || isNaN(price) || price <= 0) return null
+    const priceRaw = get('Fiyat (₺)')
+    const price = parseFloat(priceRaw || '0')
+    if (!category || isNaN(price) || price <= 0) return null
+
     const allergenStr = get('Alerjenler') || ''
     return {
         name, category,
@@ -46,6 +56,27 @@ function parseRow(row) {
         calories: parseInt(get('Kalori (kcal)') || '0') || null,
         allergens: allergenStr ? allergenStr.split(',').map(a => a.trim()).filter(Boolean) : [],
         is_available: true,
+    }
+}
+
+/* ── Settings'e kategori/alerjen merge et ─────────────────── */
+async function mergeIntoSettings(key, newNames, defaultList) {
+    try {
+        const { data } = await supabase.from('settings').select('value').eq('key', key).single()
+        let existing = []
+        try {
+            const parsed = data?.value ? JSON.parse(data.value) : []
+            existing = Array.isArray(parsed) ? parsed : []
+        } catch { existing = defaultList.map(n => ({ name: n, active: true })) }
+
+        const existingNames = new Set(existing.map(e => e.name.toLowerCase()))
+        const toAdd = newNames.filter(n => !existingNames.has(n.toLowerCase()))
+        if (toAdd.length === 0) return
+
+        const merged = [...existing, ...toAdd.map(name => ({ name, active: true }))]
+        await supabase.from('settings').upsert({ key, value: JSON.stringify(merged) }, { onConflict: 'key' })
+    } catch (e) {
+        console.warn('Settings merge hatası:', e)
     }
 }
 
@@ -74,54 +105,113 @@ function Step({ num, title, desc, active, done }) {
 
 export default function BulkImport() {
     const [file, setFile] = useState(null)
-    const [preview, setPreview] = useState([])
+    const [preview, setPreview] = useState([])          // parsed rows from Excel
     const [errors, setErrors] = useState([])
-    const [status, setStatus] = useState('idle')   // idle | loading | success | error
+    const [status, setStatus] = useState('idle')        // idle | checking | loading | success | error
     const [imported, setImported] = useState(0)
     const [showTable, setShowTable] = useState(false)
+    const [duplicates, setDuplicates] = useState([])    // [{ row, existing, action: 'skip'|'replace' }]
     const inputRef = useRef()
 
     const step = file ? (preview.length > 0 ? 3 : 2) : 1
 
     /* ── Dosya seç → parse ───────────────────────────────── */
-    const handleFile = (e) => {
+    const handleFile = async (e) => {
         const f = e.target.files?.[0]
         if (!f) return
         setFile(f)
-        setStatus('idle')
+        setStatus('checking')
         setImported(0)
         setErrors([])
         setPreview([])
+        setDuplicates([])
 
         const reader = new FileReader()
-        reader.onload = (ev) => {
+        reader.onload = async (ev) => {
             const wb = XLSX.read(ev.target.result, { type: 'binary' })
             const ws = wb.Sheets[wb.SheetNames[0]]
-            const raw = XLSX.utils.sheet_to_json(ws, { defval: '' })
+            const raw = XLSX.utils.sheet_to_json(ws)
 
             const valid = [], errs = []
             raw.forEach((row, i) => {
                 const parsed = parseRow(row)
-                if (parsed) valid.push({ ...parsed, _rowNum: i + 2 })
-                else errs.push(`Satır ${i + 2}: "Ürün Adı", "Kategori" veya "Fiyat" eksik/geçersiz`)
+                if (!parsed) {
+                    errs.push(`Satır ${i + 2}: "Ürün Adı", "Kategori" veya "Fiyat" eksik/geçersiz`)
+                } else if (!parsed.empty) {
+                    valid.push({ ...parsed, _rowNum: i + 2 })
+                }
             })
-            setPreview(valid)
+
+            // Mevcut menüden isim eşleşmesi kontrol
+            try {
+                const { data: existing } = await supabase.from('menu').select('id, name')
+                if (existing && existing.length > 0) {
+                    const existingMap = {}
+                    existing.forEach(e => { existingMap[e.name.toLowerCase()] = e })
+                    const dups = [], clean = []
+                    valid.forEach(row => {
+                        const match = existingMap[row.name.toLowerCase()]
+                        if (match) {
+                            dups.push({ row, existing: match, action: 'skip' })
+                        } else {
+                            clean.push(row)
+                        }
+                    })
+                    setDuplicates(dups)
+                    setPreview(clean)
+                } else {
+                    setPreview(valid)
+                }
+            } catch {
+                setPreview(valid)
+            }
+
             setErrors(errs)
+            setStatus('idle')
         }
         reader.readAsBinaryString(f)
     }
 
-    /* ── Supabase'e toplu yükle ──────────────────────────── */
+    const setDuplicateAction = (idx, action) => {
+        setDuplicates(prev => prev.map((d, i) => i === idx ? { ...d, action } : d))
+    }
+
+    /* ── Supabase'e toplu yükle + settings güncelle ──────── */
     const handleImport = async () => {
-        if (!preview.length) return
+        const totalRows = preview.length + duplicates.filter(d => d.action !== 'skip').length
+        if (totalRows === 0) return
         setStatus('loading')
-        const rows = preview.map(({ _rowNum, ...rest }) => rest)
+
+        const toInsert = preview.map(({ _rowNum, ...rest }) => rest)
+        const toReplace = duplicates.filter(d => d.action === 'replace')
+
         try {
-            const { error } = await supabase.from('menu').insert(rows)
-            if (error) throw error
-            setImported(rows.length)
+            // Yeni ülrünleri ekle
+            if (toInsert.length > 0) {
+                const { error } = await supabase.from('menu').insert(toInsert)
+                if (error) throw error
+            }
+
+            // Düplicateları güncelle
+            for (const dup of toReplace) {
+                const { _rowNum, ...fields } = dup.row
+                const { error } = await supabase.from('menu').update(fields).eq('id', dup.existing.id)
+                if (error) throw error
+            }
+
+            // Kategori ve alerjenleri settings'e merge et
+            const allRows = [...toInsert, ...toReplace.map(d => d.row)]
+            const newCats = [...new Set(allRows.map(r => r.category).filter(Boolean))]
+            const newAllergens = [...new Set(allRows.flatMap(r => r.allergens || []).filter(Boolean))]
+            await Promise.all([
+                mergeIntoSettings('categories_config', newCats, ['Başlangıçlar', 'Ana Yemekler', 'İçecekler', 'Tatlılar']),
+                newAllergens.length > 0 && mergeIntoSettings('allergens_config', newAllergens, ['Gluten', 'Süt', 'Yumurta', 'Fıstık', 'Soya', 'Balık']),
+            ])
+
+            setImported(toInsert.length + toReplace.length)
             setStatus('success')
             setPreview([])
+            setDuplicates([])
             setFile(null)
             inputRef.current.value = ''
         } catch (err) {
@@ -131,7 +221,7 @@ export default function BulkImport() {
     }
 
     const reset = () => {
-        setFile(null); setPreview([]); setErrors([])
+        setFile(null); setPreview([]); setErrors([]); setDuplicates([])
         setStatus('idle'); setImported(0); setShowTable(false)
         if (inputRef.current) inputRef.current.value = ''
     }
@@ -268,7 +358,7 @@ export default function BulkImport() {
             )}
 
             {/* ── Adım 3: Önizleme + Onayla ── */}
-            {preview.length > 0 && status !== 'success' && (
+            {(preview.length > 0 || duplicates.length > 0) && status !== 'success' && (
                 <div style={{ padding: '20px 24px', borderRadius: '18px', background: 'var(--surface)', border: '1.5px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                         ADIM 3 — ONAYLA
@@ -277,9 +367,9 @@ export default function BulkImport() {
                     {/* Özet istatistikler */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                         {[
-                            { label: 'Ürün', value: preview.length, color: '#732841' },
-                            { label: 'Kategori', value: [...new Set(preview.map(r => r.category))].length, color: '#00B894' },
-                            { label: 'Toplam Fiyat', value: `${preview.reduce((s, r) => s + r.price, 0).toFixed(0)} ₺`, color: '#FDCB6E' },
+                            { label: 'Yeni Ürün', value: preview.length, color: '#732841' },
+                            { label: 'Çakışan', value: duplicates.length, color: duplicates.length > 0 ? '#D97706' : '#00B894' },
+                            { label: 'Kategori', value: [...new Set([...preview, ...duplicates.map(d => d.row)].map(r => r.category))].length, color: '#00B894' },
                         ].map(stat => (
                             <div key={stat.label} style={{
                                 padding: '14px 12px', borderRadius: '14px', textAlign: 'center',
@@ -292,75 +382,147 @@ export default function BulkImport() {
                         ))}
                     </div>
 
-                    {/* Tablo toggle */}
-                    <button
-                        onClick={() => setShowTable(v => !v)}
-                        style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '12px 16px', borderRadius: '12px', width: '100%', textAlign: 'left',
-                            background: 'var(--surface2)', border: '1px solid var(--border)', cursor: 'pointer',
-                            fontFamily: 'Inter, sans-serif',
-                        }}
-                    >
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
-                            Önizleme ({Math.min(preview.length, 10)} / {preview.length} ürün)
-                        </span>
-                        {showTable ? <ChevronUp size={15} style={{ color: 'var(--muted)' }} /> : <ChevronDown size={15} style={{ color: 'var(--muted)' }} />}
-                    </button>
-
-                    {showTable && (
-                        <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                                    <thead>
-                                        <tr style={{ background: 'var(--surface2)' }}>
-                                            {['Kategori', 'Ürün Adı', 'Fiyat', 'Kalori', 'Alerjenler'].map(h => (
-                                                <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontWeight: 700, color: 'var(--text2)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {preview.slice(0, 10).map((row, i) => (
-                                            <tr key={i} style={{ background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface2)', borderBottom: '1px solid var(--border)' }}>
-                                                <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap' }}>{row.category}</td>
-                                                <td style={{ padding: '10px 14px', fontWeight: 500, color: 'var(--text)' }}>{row.name}</td>
-                                                <td style={{ padding: '10px 14px', color: 'var(--text2)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.price} ₺</td>
-                                                <td style={{ padding: '10px 14px', color: 'var(--muted)', textAlign: 'center' }}>{row.calories || '—'}</td>
-                                                <td style={{ padding: '10px 14px', color: 'var(--muted)' }}>{row.allergens?.join(', ') || '—'}</td>
-                                            </tr>
-                                        ))}
-                                        {preview.length > 10 && (
-                                            <tr style={{ background: 'var(--surface2)' }}>
-                                                <td colSpan={5} style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--muted)', fontStyle: 'italic' }}>
-                                                    +{preview.length - 10} ürün daha...
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                    {/* Çakışan ürünler */}
+                    {duplicates.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '2px' }}>
+                                <AlertTriangle size={14} style={{ color: '#D97706' }} />
+                                <p style={{ fontSize: '12.5px', fontWeight: 700, color: '#92400E', fontFamily: 'Inter, sans-serif' }}>
+                                    {duplicates.length} adet çakışan ürün — ne yapılsın?
+                                </p>
                             </div>
+                            {duplicates.map((dup, idx) => (
+                                <div key={idx} style={{
+                                    padding: '12px 14px', borderRadius: '12px',
+                                    background: 'rgba(217,119,6,0.05)',
+                                    border: `1.5px solid ${dup.action === 'replace' ? 'rgba(217,119,6,0.40)' : 'rgba(217,119,6,0.18)'}`,
+                                    display: 'flex', alignItems: 'center', gap: '12px',
+                                    transition: 'border-color 0.15s',
+                                }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {dup.row.name}
+                                        </p>
+                                        <p style={{ fontSize: '11.5px', color: 'var(--muted)', fontFamily: 'Inter, sans-serif', marginTop: '2px' }}>
+                                            Mevcut fiyat: <strong style={{ color: 'var(--text2)' }}>{dup.row.price} ₺</strong>{dup.row.category && <> · {dup.row.category}</>}
+                                        </p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                                        <button
+                                            onClick={() => setDuplicateAction(idx, 'skip')}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '5px',
+                                                padding: '6px 12px', borderRadius: '8px',
+                                                fontSize: '12px', fontWeight: 700,
+                                                background: dup.action === 'skip' ? '#EF444415' : 'var(--surface2)',
+                                                border: `1.5px solid ${dup.action === 'skip' ? '#EF4444' : 'var(--border)'}`,
+                                                color: dup.action === 'skip' ? '#EF4444' : 'var(--muted)',
+                                                cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                                                transition: 'all 0.15s',
+                                            }}
+                                        >
+                                            <SkipForward size={12} /> Atla
+                                        </button>
+                                        <button
+                                            onClick={() => setDuplicateAction(idx, 'replace')}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '5px',
+                                                padding: '6px 12px', borderRadius: '8px',
+                                                fontSize: '12px', fontWeight: 700,
+                                                background: dup.action === 'replace' ? 'rgba(217,119,6,0.12)' : 'var(--surface2)',
+                                                border: `1.5px solid ${dup.action === 'replace' ? '#D97706' : 'var(--border)'}`,
+                                                color: dup.action === 'replace' ? '#92400E' : 'var(--muted)',
+                                                cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                                                transition: 'all 0.15s',
+                                            }}
+                                        >
+                                            <RefreshCw size={12} /> Güncelle
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
 
+                    {/* Önizleme tablosu */}
+                    {preview.length > 0 && (
+                        <>
+                            <button
+                                onClick={() => setShowTable(v => !v)}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '12px 16px', borderRadius: '12px', width: '100%', textAlign: 'left',
+                                    background: 'var(--surface2)', border: '1px solid var(--border)', cursor: 'pointer',
+                                    fontFamily: 'Inter, sans-serif',
+                                }}
+                            >
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
+                                    Önizleme ({Math.min(preview.length, 10)} / {preview.length} yeni ürün)
+                                </span>
+                                {showTable ? <ChevronUp size={15} style={{ color: 'var(--muted)' }} /> : <ChevronDown size={15} style={{ color: 'var(--muted)' }} />}
+                            </button>
+
+                            {showTable && (
+                                <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                    <div style={{ overflowX: 'auto' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                            <thead>
+                                                <tr style={{ background: 'var(--surface2)' }}>
+                                                    {['Kategori', 'Ürün Adı', 'Fiyat', 'Kalori', 'Alerjenler'].map(h => (
+                                                        <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontWeight: 700, color: 'var(--text2)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {preview.slice(0, 10).map((row, i) => (
+                                                    <tr key={i} style={{ background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface2)', borderBottom: '1px solid var(--border)' }}>
+                                                        <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap' }}>{row.category}</td>
+                                                        <td style={{ padding: '10px 14px', fontWeight: 500, color: 'var(--text)' }}>{row.name}</td>
+                                                        <td style={{ padding: '10px 14px', color: 'var(--text2)', whiteSpace: 'nowrap', textAlign: 'right' }}>{row.price} ₺</td>
+                                                        <td style={{ padding: '10px 14px', color: 'var(--muted)', textAlign: 'center' }}>{row.calories || '—'}</td>
+                                                        <td style={{ padding: '10px 14px', color: 'var(--muted)' }}>{row.allergens?.join(', ') || '—'}</td>
+                                                    </tr>
+                                                ))}
+                                                {preview.length > 10 && (
+                                                    <tr style={{ background: 'var(--surface2)' }}>
+                                                        <td colSpan={5} style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--muted)', fontStyle: 'italic' }}>
+                                                            +{preview.length - 10} ürün daha...
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+
                     {/* Onayla butonu */}
-                    <button
-                        onClick={handleImport}
-                        disabled={status === 'loading'}
-                        style={{
-                            width: '100%', padding: '16px', borderRadius: '14px',
-                            fontSize: '15px', fontWeight: 700, color: 'white',
-                            background: status === 'loading' ? 'var(--border)' : 'linear-gradient(135deg,#00B894,#00967A)',
-                            boxShadow: status === 'loading' ? 'none' : '0 5px 18px rgba(0,184,148,0.3)',
-                            border: 'none', cursor: status === 'loading' ? 'not-allowed' : 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                            fontFamily: 'Inter, sans-serif', transition: 'opacity 0.2s',
-                        }}
-                    >
-                        {status === 'loading'
-                            ? <><Loader2 size={18} className="animate-spin" /> Yükleniyor...</>
-                            : <><Upload size={18} /> {preview.length} Ürünü Menüye Ekle</>
-                        }
-                    </button>
+                    {(() => {
+                        const total = preview.length + duplicates.filter(d => d.action === 'replace').length
+                        const disabled = status === 'loading' || total === 0
+                        return (
+                            <button
+                                onClick={handleImport}
+                                disabled={disabled}
+                                style={{
+                                    width: '100%', padding: '16px', borderRadius: '14px',
+                                    fontSize: '15px', fontWeight: 700, color: 'white',
+                                    background: disabled ? 'var(--border)' : 'linear-gradient(135deg,#00B894,#00967A)',
+                                    boxShadow: disabled ? 'none' : '0 5px 18px rgba(0,184,148,0.3)',
+                                    border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                                    fontFamily: 'Inter, sans-serif', transition: 'opacity 0.2s',
+                                }}
+                            >
+                                {status === 'loading'
+                                    ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Yükleniyor...</>
+                                    : <><Upload size={18} /> {total} Ürünü Menüye {duplicates.filter(d => d.action === 'replace').length > 0 ? 'Ekle / Güncelle' : 'Ekle'}</>
+                                }
+                            </button>
+                        )
+                    })()}
                 </div>
             )}
 

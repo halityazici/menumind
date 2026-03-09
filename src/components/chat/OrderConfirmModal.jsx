@@ -361,9 +361,20 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                                                             style={{ objectFit: item.image_url ? 'cover' : 'contain', padding: item.image_url ? 0 : '4px', background: 'var(--surface)' }}
                                                             onError={e => { e.target.src = noImage; e.target.style.objectFit = 'contain'; e.target.style.padding = '4px' }}
                                                         />
-                                                        <span className="text-sm truncate flex-1" style={{ color: 'var(--text)' }}>
-                                                            {item.name}
-                                                        </span>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
+                                                            <span className="text-sm truncate" style={{ color: 'var(--text)' }}>
+                                                                {item.name}
+                                                            </span>
+                                                            {item.is_new && (
+                                                                <span style={{
+                                                                    fontSize: '9px', padding: '1px 6px', borderRadius: '5px', flexShrink: 0,
+                                                                    background: 'rgba(251,191,36,0.15)', color: '#92400E', fontWeight: 700,
+                                                                    border: '1px solid rgba(251,191,36,0.35)',
+                                                                }}>
+                                                                    ✨ YENİ
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
                                                             <span className="text-xs font-medium" style={{ color: 'var(--text2)' }}>
                                                                 {Number(item.price).toFixed(0)} ₺

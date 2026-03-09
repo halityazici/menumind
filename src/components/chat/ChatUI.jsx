@@ -5,10 +5,8 @@ import InputBar from './InputBar'
 import OrderConfirmModal from './OrderConfirmModal'
 import { useChat } from '../../hooks/useChat'
 
-// Özel logo
 const logoModules = import.meta.glob('../../assets/logo.png', { eager: true, as: 'url' })
 const logoSrc = logoModules['../../assets/logo.png'] ?? null
-
 
 export default function ChatUI() {
     const { messages, isLoading, menuItems, settings, error, isInitialized, sendMessage, resetChat } = useChat()
@@ -22,74 +20,115 @@ export default function ChatUI() {
     const restaurantName = settings?.restaurant_name || import.meta.env.VITE_RESTAURANT_NAME || 'MenuMind'
 
     return (
-        <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
+        <div className="flex flex-col h-full" style={{ background: 'var(--surface)' }}>
 
-            {/* ── Header ────────────────────────────────────── */}
+            {/* ── Header ──────────────────────────────────────── */}
             <header
-                className="flex-shrink-0 flex items-center justify-between px-5 py-4"
+                className="flex-shrink-0"
                 style={{
-                    background: 'linear-gradient(135deg, #732841 0%, #5a1f31 100%)',
-                    boxShadow: '0 2px 12px rgba(115,40,65,0.30)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '14px 18px',
+                    background: 'linear-gradient(135deg, #7B2D45 0%, #5C1F31 100%)',
+                    boxShadow: '0 2px 16px rgba(92,31,49,0.40)',
+                    position: 'relative',
+                    overflow: 'hidden',
                 }}
             >
-                <div className="flex items-center gap-3.5">
-                    <div
-                        className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                        style={{
-                            background: 'rgba(255,255,255,0.18)',
-                            border: '2px solid rgba(255,255,255,0.35)',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        }}
-                    >
+                {/* Subtle glow overlay */}
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.07) 0%, transparent 60%)',
+                    pointerEvents: 'none',
+                }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+                    {/* Avatar */}
+                    <div style={{
+                        width: '40px', height: '40px',
+                        borderRadius: '12px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        overflow: 'hidden', flexShrink: 0,
+                        background: 'rgba(255,255,255,0.15)',
+                        border: '1.5px solid rgba(255,255,255,0.25)',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.20)',
+                    }}>
                         {logoSrc
                             ? <img src={logoSrc} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                            : <ChefHat size={22} style={{ color: 'white' }} />
+                            : <ChefHat size={18} style={{ color: 'white' }} />
                         }
                     </div>
+
+                    {/* Title */}
                     <div>
-                        <h1
-                            className="font-bold text-base leading-tight"
-                            style={{ color: 'white', fontFamily: 'Poppins', letterSpacing: '-0.01em' }}
-                        >
+                        <h1 style={{
+                            fontWeight: 700, fontSize: '15px',
+                            color: 'white', fontFamily: 'Poppins',
+                            letterSpacing: '-0.01em', lineHeight: 1.2,
+                        }}>
                             {restaurantName}
                         </h1>
-                        <div className="flex items-center gap-1.5 mt-1">
-                            <span
-                                className="w-1.5 h-1.5 rounded-full"
-                                style={{ background: '#55EFC4' }}
-                            />
-                            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                                Garson • AI Menü Asistanı
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
+                            <span style={{
+                                width: '6px', height: '6px', borderRadius: '50%',
+                                background: '#34D399',
+                                boxShadow: '0 0 6px rgba(52,211,153,0.7)',
+                                display: 'block',
+                            }} />
+                            <span style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.70)', fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
+                                Garson · AI Menü Asistanı
                             </span>
                         </div>
                     </div>
                 </div>
 
+                {/* Reset button */}
                 <button
                     onClick={resetChat}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl transition-all"
-                    style={{ background: 'rgba(255,255,255,0.15)', color: 'white' }}
                     title="Sohbeti sıfırla"
+                    style={{
+                        width: '36px', height: '36px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        borderRadius: '10px',
+                        background: 'rgba(255,255,255,0.12)',
+                        border: '1px solid rgba(255,255,255,0.18)',
+                        color: 'rgba(255,255,255,0.80)',
+                        transition: 'background 0.18s',
+                        position: 'relative',
+                    }}
                 >
-                    <RotateCcw size={15} />
+                    <RotateCcw size={14} />
                 </button>
             </header>
 
-            {/* ── Messages ──────────────────────────────────── */}
+            {/* ── Messages ────────────────────────────────────── */}
             <div
-                className="flex-1 overflow-y-auto px-5 py-6 space-y-5"
-                style={{ background: 'var(--bg2)' }}
+                className="flex-1 overflow-y-auto"
+                style={{
+                    padding: '20px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                    background: 'var(--bg)',
+                }}
             >
                 {!isInitialized && (
-                    <div className="flex items-center justify-center h-full">
-                        <div className="text-center space-y-3">
-                            <div
-                                className="w-12 h-12 rounded-full mx-auto flex items-center justify-center"
-                                style={{ background: 'var(--accent-soft)' }}
-                            >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{
+                                width: '48px', height: '48px',
+                                borderRadius: '14px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                margin: '0 auto 12px',
+                                background: 'var(--accent-soft)',
+                                border: '1px solid rgba(123,45,69,0.12)',
+                            }}>
                                 <Sparkles size={20} style={{ color: 'var(--accent)' }} />
                             </div>
-                            <p className="text-sm" style={{ color: 'var(--muted)' }}>Yükleniyor...</p>
+                            <p style={{ fontSize: '13px', color: 'var(--muted)', fontFamily: 'Inter, sans-serif' }}>
+                                Yükleniyor...
+                            </p>
                         </div>
                     </div>
                 )}
@@ -101,15 +140,15 @@ export default function ChatUI() {
                 {isLoading && <MessageBubble isTyping />}
 
                 {error && (
-                    <div className="flex justify-center">
-                        <span
-                            className="text-xs px-3 py-2 rounded-full"
-                            style={{
-                                background: 'rgba(225,112,85,0.08)',
-                                color: 'var(--danger)',
-                                border: '1px solid rgba(225,112,85,0.2)',
-                            }}
-                        >
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <span style={{
+                            fontSize: '12px', padding: '7px 14px',
+                            borderRadius: '100px',
+                            background: 'var(--danger-soft)',
+                            color: 'var(--danger)',
+                            border: '1px solid rgba(239,68,68,0.18)',
+                            fontFamily: 'Inter, sans-serif',
+                        }}>
                             ⚠️ {error}
                         </span>
                     </div>
@@ -118,47 +157,59 @@ export default function ChatUI() {
                 <div ref={bottomRef} />
             </div>
 
-            {/* ── Bottom bar: CTA + Input ──────────────────── */}
+            {/* ── Bottom: CTA + Input ──────────────────────────── */}
             <div
                 className="flex-shrink-0"
-                style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}
+                style={{
+                    background: 'var(--surface)',
+                    borderTop: '1px solid var(--border)',
+                    boxShadow: '0 -4px 20px rgba(0,0,0,0.05)',
+                }}
             >
                 {/* Karar Verdim butonu */}
                 {isInitialized && menuItems.length > 0 && (
-                    <div style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '14px', paddingBottom: '8px' }}>
+                    <div style={{ padding: '14px 16px 8px' }}>
                         <button
                             onClick={() => setShowModal(true)}
                             style={{
                                 width: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '10px',
-                                padding: '16px 20px',
-                                borderRadius: '18px',
-                                background: 'linear-gradient(135deg, #00B894, #00967A)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                padding: '14px 20px',
+                                borderRadius: '14px',
+                                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                                 color: 'white',
-                                fontWeight: 700,
-                                fontSize: '16px',
+                                fontWeight: 700, fontSize: '15px',
                                 letterSpacing: '0.01em',
-                                boxShadow: '0 4px 20px rgba(0,184,148,0.35)',
-                                border: 'none',
-                                cursor: 'pointer',
+                                boxShadow: '0 4px 18px rgba(16,185,129,0.35)',
+                                border: 'none', cursor: 'pointer',
                                 fontFamily: 'Inter, sans-serif',
-                                transition: 'transform 0.1s',
+                                transition: 'transform 0.15s, box-shadow 0.15s',
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'translateY(-1px)'
+                                e.currentTarget.style.boxShadow = '0 6px 22px rgba(16,185,129,0.42)'
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'translateY(0)'
+                                e.currentTarget.style.boxShadow = '0 4px 18px rgba(16,185,129,0.35)'
                             }}
                         >
-                            <span style={{ fontSize: '18px', lineHeight: 1 }}>&#x2705;</span>
-                            Karar Verdim — Sipariş Ver
+                            <span style={{
+                                width: '20px', height: '20px',
+                                borderRadius: '6px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: 'rgba(255,255,255,0.20)',
+                                fontSize: '11px', lineHeight: 1,
+                            }}>✓</span>
+                            Siparişimi Onayla
                         </button>
                     </div>
                 )}
 
-                {/* Input alanı */}
                 <InputBar onSend={sendMessage} isLoading={isLoading} disabled={!isInitialized} />
             </div>
 
-            {/* ── Modal ─────────────────────────────────────────── */}
+            {/* ── Modal ──────────────────────────────────────────── */}
             {showModal && (
                 <OrderConfirmModal
                     menuItems={menuItems}

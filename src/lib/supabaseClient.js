@@ -9,12 +9,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Convenience: fetch all available menu items
+// Convenience: fetch all available menu items (for customer-facing views)
 export async function fetchMenu() {
     const { data, error } = await supabase
         .from('menu')
         .select('*')
         .eq('is_available', true)
+        .order('sort_order', { ascending: true })
+    if (error) throw error
+    return data
+}
+
+// Fetch ALL menu items including passive (for admin panel)
+export async function fetchAllMenu() {
+    const { data, error } = await supabase
+        .from('menu')
+        .select('*')
         .order('sort_order', { ascending: true })
     if (error) throw error
     return data

@@ -1,33 +1,37 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 
-const BOT_AVATAR = {
-    width: '36px',
-    height: '36px',
-    borderRadius: '50%',
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '14px',
-    fontWeight: 700,
-    background: 'linear-gradient(135deg, #732841, #9b3d5a)',
-    color: 'white',
-    boxShadow: '0 3px 10px rgba(115,40,65,0.35)',
-    marginBottom: '4px',
+function BotAvatar() {
+    return (
+        <div style={{
+            width: '32px', height: '32px',
+            borderRadius: '10px',
+            flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '13px', fontWeight: 700,
+            background: 'linear-gradient(135deg, #7B2D45, #9C3D5A)',
+            color: 'white',
+            boxShadow: '0 3px 10px rgba(123,45,69,0.30)',
+            fontFamily: 'Poppins, sans-serif',
+            letterSpacing: '-0.02em',
+            alignSelf: 'flex-end',
+            marginBottom: '2px',
+        }}>
+            M
+        </div>
+    )
 }
 
 function TypingIndicator() {
     return (
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}
-            className="animate-fade-in-up">
-            <div style={BOT_AVATAR}>M</div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }} className="animate-fade-in-up">
+            <BotAvatar />
             <div style={{
-                padding: '14px 18px',
-                borderRadius: '20px 20px 20px 4px',
+                padding: '12px 16px',
+                borderRadius: '18px 18px 18px 5px',
                 background: 'var(--surface)',
                 border: '1px solid var(--border)',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+                boxShadow: 'var(--shadow-sm)',
             }}>
                 <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                     <span className="typing-dot" />
@@ -44,85 +48,72 @@ export default function MessageBubble({ message, isTyping }) {
 
     const isUser = message.role === 'user'
 
-    const bubbleStyle = isUser
-        ? {
-            maxWidth: '82%',
-            padding: '14px 18px',
-            borderRadius: '20px 20px 4px 20px',
-            background: 'linear-gradient(135deg, #732841, #5a1f31)',
-            color: 'white',
-            boxShadow: '0 3px 16px rgba(115,40,65,0.30)',
-            fontSize: '15px',
-            lineHeight: 1.65,
-            fontFamily: 'Inter, sans-serif',
-        }
-        : {
-            maxWidth: '82%',
-            padding: '14px 18px',
-            borderRadius: '20px 20px 20px 4px',
-            background: 'var(--surface)',
-            color: 'var(--text)',
-            border: '1px solid var(--border)',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
-            fontSize: '15px',
-            lineHeight: 1.65,
-            fontFamily: 'Inter, sans-serif',
-        }
-
     return (
         <div
             className="animate-fade-in-up"
             style={{
                 display: 'flex',
                 alignItems: 'flex-end',
-                gap: '10px',
+                gap: '8px',
                 flexDirection: isUser ? 'row-reverse' : 'row',
             }}
         >
-            {/* Bot avatar */}
-            {!isUser && <div style={BOT_AVATAR}>M</div>}
+            {!isUser && <BotAvatar />}
 
-            <div style={bubbleStyle}>
+            <div style={{
+                maxWidth: '80%',
+                padding: '12px 16px',
+                borderRadius: isUser ? '18px 18px 5px 18px' : '18px 18px 18px 5px',
+                background: isUser
+                    ? 'linear-gradient(135deg, #7B2D45, #5C1F31)'
+                    : 'var(--surface)',
+                color: isUser ? 'white' : 'var(--text)',
+                border: isUser ? 'none' : '1px solid var(--border)',
+                boxShadow: isUser
+                    ? '0 4px 16px rgba(123,45,69,0.28)'
+                    : 'var(--shadow-sm)',
+                fontSize: '14.5px',
+                lineHeight: 1.65,
+                fontFamily: 'Inter, sans-serif',
+            }}>
                 {isUser ? (
-                    <p style={{ margin: 0, lineHeight: 1.65, fontSize: '15px' }}>{message.content}</p>
+                    <p style={{ margin: 0, lineHeight: 1.65, fontSize: '14.5px' }}>
+                        {message.content}
+                    </p>
                 ) : (
                     <div>
                         <ReactMarkdown
                             components={{
                                 p: ({ children }) => (
                                     <p style={{
-                                        margin: '0 0 10px 0',
+                                        margin: '0 0 9px 0',
                                         lineHeight: 1.65,
-                                        fontSize: '15px',
+                                        fontSize: '14.5px',
                                         color: 'var(--text)',
                                         fontFamily: 'Inter, sans-serif',
-                                    }}
-                                        className="last:mb-0"
-                                    >
+                                    }} className="last:mb-0">
                                         {children}
                                     </p>
                                 ),
                                 strong: ({ children }) => (
-                                    <strong style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '15px' }}>
+                                    <strong style={{ color: 'var(--accent)', fontWeight: 700 }}>
                                         {children}
                                     </strong>
                                 ),
                                 ul: ({ children }) => (
-                                    <ul style={{ margin: '6px 0 10px 0', padding: 0, listStyle: 'none' }}>
+                                    <ul style={{ margin: '5px 0 9px 0', padding: 0, listStyle: 'none' }}>
                                         {children}
                                     </ul>
                                 ),
                                 li: ({ children }) => (
                                     <li style={{
-                                        display: 'flex',
-                                        gap: '8px',
+                                        display: 'flex', gap: '8px',
                                         color: 'var(--text2)',
-                                        lineHeight: 1.6,
-                                        fontSize: '14px',
-                                        marginBottom: '6px',
+                                        lineHeight: 1.6, fontSize: '14px',
+                                        marginBottom: '5px',
                                         fontFamily: 'Inter, sans-serif',
                                     }}>
-                                        <span style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '3px' }}>•</span>
+                                        <span style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '3px', fontWeight: 700 }}>·</span>
                                         <span>{children}</span>
                                     </li>
                                 ),
@@ -134,10 +125,10 @@ export default function MessageBubble({ message, isTyping }) {
                 )}
 
                 <div style={{
-                    fontSize: '11px',
+                    fontSize: '10.5px',
                     marginTop: '6px',
                     textAlign: isUser ? 'right' : 'left',
-                    color: isUser ? 'rgba(255,255,255,0.55)' : 'var(--muted)',
+                    color: isUser ? 'rgba(255,255,255,0.45)' : 'var(--muted)',
                     fontFamily: 'Inter, sans-serif',
                 }}>
                     {new Date(message.ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
