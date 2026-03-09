@@ -40,7 +40,7 @@
             "headers": [
                 {
                     "key": "Access-Control-Allow-Origin",
-                    "value": "https://menumind-phi.vercel.app"
+                    "value": "https://themenumind.com"
                 },
                 {
                     "key": "Access-Control-Allow-Methods",

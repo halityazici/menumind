@@ -39,11 +39,17 @@ function pruneRateLimitMap() {
 
 /* ── Handler ─────────────────────────────────────────────────────── */
 export default async function handler(req, res) {
-    // CORS
-    res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*')
+    // CORS — izin verilen originleri kontrol et
+    const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || 'https://themenumind.com')
+        .split(',')
+        .map(o => o.trim())
+    const requestOrigin = req.headers.origin || ''
+    const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0]
+    res.setHeader('Access-Control-Allow-Origin', corsOrigin)
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
     res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('Vary', 'Origin')
 
     if (req.method === 'OPTIONS') return res.status(200).end()
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' })
