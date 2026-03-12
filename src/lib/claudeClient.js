@@ -9,6 +9,10 @@
  *  - Exponential backoff ile 2 otomatik yeniden deneme (429 / 5xx)
  *  - 25 saniyelik AbortController timeout
  *  - Mesaj geçmişi son 20 ile sınırlı — payload şişmesini önler
+ *
+ * Çokdillilik:
+ *  - lang='en' → Claude İngilizce yanıtlar, ürün isimleri değişmez
+ *  - Ürün açıklamaları & alerjen bilgileri otomatik çevrilir
  */
 
 // Sadece local dev'de API key'i oku — production bundle'a gömülmesin
@@ -63,7 +67,9 @@ async function fetchWithRetry(url, options, maxRetries = 2) {
 }
 
 /* ── Sistem promptu ──────────────────────────────────────────────── */
-function buildSystemPrompt(menuItems, restaurantName, recommendedItems = []) {
+function buildSystemPrompt(menuItems, restaurantName, recommendedItems = [], lang = 'tr') {
+    const isEnglish = lang === 'en'
+
     const grouped = menuItems.length === 0
         ? null
         : menuItems.reduce((acc, item) => {
@@ -76,14 +82,14 @@ function buildSystemPrompt(menuItems, restaurantName, recommendedItems = []) {
         ? Object.entries(grouped).map(([cat, items]) => {
             const rows = items.map(item => {
                 const allergens = item.allergens?.length
-                    ? `  ⚠️ Alerjenler: ${item.allergens.join(', ')}`
-                    : '  ✅ Alerjen içermez'
-                const newBadge = item.is_new ? ' 🆕 YENİ' : ''
+                    ? `  ⚠️ ${isEnglish ? 'Allergens' : 'Alerjenler'}: ${item.allergens.join(', ')}`
+                    : `  ✅ ${isEnglish ? 'No allergens' : 'Alerjen içermez'}`
+                const newBadge = item.is_new ? (isEnglish ? ' 🆕 NEW' : ' 🆕 YENİ') : ''
                 return `- **${item.name}**${newBadge} — ${item.price} ₺\n  ${item.description || ''}\n${allergens}`
             }).join('\n')
             return `\n### ${cat}\n${rows}`
         }).join('\n')
-        : 'Menü bilgisi şu an yüklenemedi.'
+        : (isEnglish ? 'Menu information could not be loaded.' : 'Menü bilgisi şu an yüklenemedi.')
 
     const newItems = menuItems.filter(i => i.is_new)
     let newItemsSection = ''
@@ -91,7 +97,19 @@ function buildSystemPrompt(menuItems, restaurantName, recommendedItems = []) {
         const newList = newItems.map(i =>
             `- **${i.name}** — ${i.price} ₺${i.description ? '\n  ' + i.description.slice(0, 100) : ''}`
         ).join('\n')
-        newItemsSection = `
+
+        if (isEnglish) {
+            newItemsSection = `
+## 🆕 Newly Added Products — IMPORTANT
+The following products have been newly added to the menu and should be introduced to customers.
+
+**Rule:** When the customer writes for the first time and asks a general question (what should I eat, any recommendations, what's available, etc.) or at a natural point in the first conversation — by the 2nd or 3rd message at the latest — introduce one of these products with a warm sentence like "This just arrived, if you haven't tried it you definitely should — everyone who's tasted it loved it 😊" or similar. Don't list them all at once, highlight the most suitable one. **Don't use advertising language**, speak naturally like a waiter talking to regulars.
+
+${newList}
+
+`
+        } else {
+            newItemsSection = `
 ## 🆕 Yeni Eklenen Ürünler — ÖNEMLİ
 Aşağıdaki ürünler menüye yeni eklenmiştir ve mutlaka müşterilere tanıtılmalıdır.
 
@@ -100,20 +118,66 @@ Aşağıdaki ürünler menüye yeni eklenmiştir ve mutlaka müşterilere tanıt
 ${newList}
 
 `
+        }
     }
 
     let recommendSection = ''
     if (recommendedItems.length > 0) {
         const recList = recommendedItems
-            .map(r => `- **${r.name}** (${r.category || 'Genel'})${r.description ? ' — ' + r.description.slice(0, 80) : ''}`)
+            .map(r => `- **${r.name}** (${r.category || (isEnglish ? 'General' : 'Genel')})${r.description ? ' — ' + r.description.slice(0, 80) : ''}`)
             .join('\n')
 
-        recommendSection = `
+        if (isEnglish) {
+            recommendSection = `
+## Featured & Recommended Products
+The following products are specifically highlighted by the restaurant. They may be newly added, most popular, or items whose sales the restaurant wants to boost. In the natural flow of conversation — when the customer doesn't know what to order, asks for a general recommendation, or is exploring the menu for the first time — suggest 1–2 of these with a genuine and friendly waiter attitude. Don't use advertising language; present them naturally like "We especially love this today" or "Would you like to try something new?". Don't list them all at once, choose the most appropriate one for the situation.
+
+${recList}
+
+`
+        } else {
+            recommendSection = `
 ## Öne Çıkan & Önerilen Ürünler
 Aşağıdaki ürünler restoran tarafından özellikle öne çıkarılmak istenmektedir. Yeni eklenenler, en çok tercih edilenler ya da satışı desteklenmek istenen ürünler olabilir. Sohbetin doğal akışında — müşteri ne yiyeceğini bilemediğinde, genel bir öneri istediğinde ya da menüyü ilk kez incelediğinde — bu ürünlerden 1–2'sini içten ve samimi bir garson tavrıyla öner. Reklam dili kullanma; \"Bugün özellikle şunu çok beğeniyoruz\" ya da \"Yeni bir şey denemek ister misiniz?\" gibi doğal bir akışla sun. Tüm listeyi ard arda sıralama, duruma en uygun olanı seç.
 
 ${recList}
 
+`
+        }
+    }
+
+    if (isEnglish) {
+        return `You are the AI-powered menu assistant of the restaurant called ${restaurantName || 'Our Restaurant'}.
+
+## Your Character
+- Your name is Waiter. You are a polite, warm and friendly assistant.
+- You speak English, and address the customer respectfully using "you".
+- You present products in a convincing but not pushy manner.
+- You don't mention prices unless asked, but when asked you state them directly.
+- You are very careful about allergens — if the customer mentions an allergy, don't recommend products containing it.
+
+## CRITICAL RULE — Product Names
+- **NEVER translate product names.** Always use the original product names exactly as they appear in the menu below (they are in Turkish). For example, say "Türk Kahvesi" not "Turkish Coffee", say "Mercimek Çorbası" not "Lentil Soup".
+- You MUST translate the product descriptions and all other information into fluent, natural English.
+- When presenting a product, keep the original name but explain what it is in English. For example: "**Mercimek Çorbası** — A traditional hearty red lentil soup, perfect for a warm start."
+
+## Your Capabilities
+- You can present the menu by categories.
+- You can make personalized recommendations based on the customer's taste.
+- You can provide information about allergens, calories, or ingredients.
+- You can suggest meal sets by combining multiple products.
+- You can clearly present an order summary.
+
+## Important Rules
+- Don't suggest food or drinks that are not on the menu.
+- Don't make up information (no hallucination).
+- When the customer selects something: say "Great choice! You can confirm your order by pressing the 'Confirm My Order' button."
+${newItemsSection}${recommendSection}
+## Current Menu
+${menuSection}
+
+## Order Management
+When the customer wants to place an order, list the selected products, calculate the total amount and direct them to the "Confirm My Order" button. Track the order list in JSON format.
 `
     }
 
@@ -165,9 +229,10 @@ function friendlyError(status, code) {
  * @param {Array}  menuItems
  * @param {string} restaurantName
  * @param {Array}  recommendedItems
+ * @param {string} lang              – 'tr' | 'en'
  */
-export async function sendMessageToClaude(messages, menuItems = [], restaurantName = '', recommendedItems = []) {
-    const systemPrompt = buildSystemPrompt(menuItems, restaurantName, recommendedItems)
+export async function sendMessageToClaude(messages, menuItems = [], restaurantName = '', recommendedItems = [], lang = 'tr') {
+    const systemPrompt = buildSystemPrompt(menuItems, restaurantName, recommendedItems, lang)
 
     // Geçmiş şişmesini önle
     const trimmedMessages = messages.slice(-MAX_HISTORY)

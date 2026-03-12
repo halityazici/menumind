@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { fetchMenu, fetchSettings } from '../lib/supabaseClient'
 import { sendMessageToClaude } from '../lib/claudeClient'
+import { t } from '../lib/i18n'
 
-const WELCOME_FALLBACK = 'Merhaba! Ben sizin yapay zeka destekli menü asistanınızım 🤖✨ Size bugün ne önerebilirim?'
 const INIT_MAX_RETRIES = 3
 const INIT_RETRY_DELAY = 1500   // ms
 
@@ -23,7 +23,7 @@ async function loadMenuAndSettings(attempt = 0) {
     }
 }
 
-export function useChat() {
+export function useChat(lang = 'tr') {
     const [messages, setMessages] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [menuItems, setMenuItems] = useState([])
@@ -32,6 +32,12 @@ export function useChat() {
     const [isInitialized, setIsInitialized] = useState(false)
     const conversationRef = useRef([])  // Claude'a gönderilen tam geçmiş
     const abortRef = useRef(null)       // iptal edilebilir mevcut istek
+    const langRef = useRef(lang)
+
+    // Keep langRef in sync
+    useEffect(() => {
+        langRef.current = lang
+    }, [lang])
 
     /* ── Menü + ayarlar yükle ──────────────────────────────────────── */
     useEffect(() => {
@@ -63,13 +69,15 @@ export function useChat() {
                 setMenuItems(filteredMenu)
                 setSettings(sett)
 
-                const welcome = sett.welcome_message || WELCOME_FALLBACK
+                const welcome = langRef.current === 'tr'
+                    ? (sett.welcome_message || t('welcome.fallback', 'tr'))
+                    : t('welcome.fallback', 'en')
                 setMessages([{ id: 'welcome', role: 'assistant', content: welcome, ts: Date.now() }])
                 setIsInitialized(true)
             } catch (err) {
                 if (cancelled) return
                 console.error('Init error:', err)
-                setError('Menü yüklenemedi. Lütfen sayfayı yenileyin.')
+                setError(t('error.menuLoad', langRef.current))
                 setIsInitialized(true)
             }
         }
@@ -77,6 +85,24 @@ export function useChat() {
         init()
         return () => { cancelled = true }
     }, [])
+
+    /* ── Dil değiştiğinde welcome mesajını güncelle ──────────────── */
+    useEffect(() => {
+        if (!isInitialized) return
+        const welcome = lang === 'tr'
+            ? (settings.welcome_message || t('welcome.fallback', 'tr'))
+            : t('welcome.fallback', 'en')
+
+        // Sadece welcome mesajı varsa (ilk mesaj) güncelle, conversation sıfırlama
+        setMessages(prev => {
+            if (prev.length <= 1) {
+                conversationRef.current = []
+                return [{ id: 'welcome', role: 'assistant', content: welcome, ts: Date.now() }]
+            }
+            // Kullanıcı sohbete başlamışsa resetleme — mevcut hali koru
+            return prev
+        })
+    }, [lang, isInitialized, settings])
 
     /* ── Önerilen ürünleri parse et ───────────────────────────────── */
     const recommendedItems = (() => {
@@ -111,7 +137,8 @@ export function useChat() {
                 conversationRef.current,
                 menuItems,
                 settings.restaurant_name,
-                recommendedItems
+                recommendedItems,
+                langRef.current
             )
 
             conversationRef.current = [...conversationRef.current, { role: 'assistant', content: reply }]
@@ -121,7 +148,7 @@ export function useChat() {
         } catch (err) {
             console.error('Claude error:', err)
             // claudeClient'ten gelen kullanıcı dostu mesajı göster
-            setError(err.message || 'Bir hata oluştu. Lütfen tekrar deneyin.')
+            setError(err.message || t('error.general', langRef.current))
         } finally {
             setIsLoading(false)
         }
@@ -130,7 +157,9 @@ export function useChat() {
     /* ── Sohbeti sıfırla ─────────────────────────────────────────── */
     const resetChat = useCallback(() => {
         conversationRef.current = []
-        const welcome = settings.welcome_message || WELCOME_FALLBACK
+        const welcome = langRef.current === 'tr'
+            ? (settings.welcome_message || t('welcome.fallback', 'tr'))
+            : t('welcome.fallback', 'en')
         setMessages([{ id: 'welcome', role: 'assistant', content: welcome, ts: Date.now() }])
         setError(null)
     }, [settings])

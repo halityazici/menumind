@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-ro
 import { ChefHat, Sparkles, Star, Clock, Shield } from 'lucide-react'
 import ChatPage from './pages/ChatPage'
 import AdminPage from './pages/AdminPage'
+import { LanguageProvider } from './context/LanguageContext'
 
 const logoModules = import.meta.glob('./assets/logo.png', { eager: true, as: 'url' })
 const logoSrc = logoModules['./assets/logo.png'] ?? null
@@ -55,6 +56,7 @@ const FEATURES = [
 
 function ChatLayout() {
   return (
+    <LanguageProvider>
     <div style={{ display: 'flex', height: '100%', background: 'var(--bg)' }}>
 
       {/* ── Sol Branding Paneli ── sadece md+ ekranda ── */}
@@ -224,6 +226,7 @@ function ChatLayout() {
         <ChatPage />
       </div>
     </div>
+    </LanguageProvider>
   )
 }
 

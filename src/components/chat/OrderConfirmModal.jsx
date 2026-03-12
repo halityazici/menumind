@@ -4,10 +4,36 @@ import { insertOrder } from '../../lib/supabaseClient'
 import { sendTelegramNotification } from '../../lib/telegram'
 import ProductDetailModal from './ProductDetailModal'
 import noImage from '../../assets/no-image.png'
+import { t } from '../../lib/i18n'
 
 const STATUS = { IDLE: 'idle', LOADING: 'loading', SUCCESS: 'success', ERROR: 'error' }
 
-export default function OrderConfirmModal({ menuItems, onClose, settings }) {
+/* ── Stable thumbnail — no flicker ── */
+function ItemThumbnail({ item }) {
+    const [failed, setFailed] = useState(false)
+    const hasUrl = item.image_url && !failed
+    return (
+        <img
+            src={hasUrl ? item.image_url : noImage}
+            alt={item.name}
+            width={40}
+            height={40}
+            className="rounded-xl flex-shrink-0"
+            style={{
+                width: '40px',
+                height: '40px',
+                objectFit: hasUrl ? 'cover' : 'contain',
+                padding: hasUrl ? 0 : '4px',
+                background: 'var(--surface)',
+            }}
+            onError={() => {
+                if (!failed) setFailed(true)
+            }}
+        />
+    )
+}
+
+export default function OrderConfirmModal({ menuItems, onClose, settings, lang = 'tr' }) {
     const [tableNo, setTableNo] = useState('')
     const [customerName, setCustomerName] = useState('')
     const [note, setNote] = useState('')
@@ -45,11 +71,11 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
         // Masa numarası zorunlu
         if (!tableNo.trim()) {
             setTableError(true)
-            setErrorMsg('Masa numarasını lütfen girin.')
+            setErrorMsg(t('order.tableMissing', lang))
             return
         }
         if (cart.length === 0) {
-            setErrorMsg('Lütfen en az bir ürün ekleyin.')
+            setErrorMsg(t('order.addMin', lang))
             return
         }
         setStatus(STATUS.LOADING)
@@ -65,6 +91,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
 
         try {
             const saved = await insertOrder(payload)
+            // Telegram'a bilgiler her zaman Türkçe gitsin
             await sendTelegramNotification(saved, settings?.telegram_chat_id)
             setStatus(STATUS.SUCCESS)
         } catch (err) {
@@ -78,13 +105,13 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                     return
                 } catch (err2) {
                     console.error('Retry failed:', err2)
-                    setErrorMsg('Sipariş gönderilemedi. Lütfen tekrar deneyin.')
+                    setErrorMsg(t('order.failed', lang))
                     setStatus(STATUS.ERROR)
                     return
                 }
             }
             console.error(err)
-            setErrorMsg('Sipariş gönderilemedi. Lütfen tekrar deneyin.')
+            setErrorMsg(t('order.failed', lang))
             setStatus(STATUS.ERROR)
         }
     }
@@ -119,10 +146,13 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                     </div>
                     <div>
                         <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '6px', fontFamily: 'Poppins', color: 'var(--text)' }}>
-                            {customerName ? `Teşekkürler, ${customerName}!` : 'Siparişiniz Alındı!'}
+                            {customerName
+                                ? `${t('order.successThanks', lang)}, ${customerName}!`
+                                : t('order.successTitle', lang)
+                            }
                         </h3>
                         <p style={{ fontSize: '14px', color: 'var(--muted)', fontFamily: 'Inter, sans-serif' }}>
-                            Mutfağa iletildi, kısa sürede hazırlanacak.
+                            {t('order.successMessage', lang)}
                         </p>
                     </div>
                     <p style={{ fontSize: '32px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'Poppins' }}>
@@ -143,7 +173,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                             boxShadow: '0 4px 14px rgba(115,40,65,0.35)',
                         }}
                     >
-                        Harika, teşekkürler! 🎉
+                        {t('order.successClose', lang)}
                     </button>
                 </div>
             </Backdrop>
@@ -159,6 +189,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
             addToCart={addToCart}
             changeQty={changeQty}
             cart={cart}
+            lang={lang}
         >
             {/* ── Fixed header ── */}
             <div
@@ -187,10 +218,10 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                         <ShoppingBag size={18} style={{ color: 'var(--accent)' }} />
                     </div>
                     <div>
-                        <h2 style={{ fontWeight: 600, fontSize: '16px', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>Sipariş Özeti</h2>
+                        <h2 style={{ fontWeight: 600, fontSize: '16px', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>{t('order.title', lang)}</h2>
                         {cart.length > 0 && (
                             <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px', fontFamily: 'Inter, sans-serif' }}>
-                                {cart.reduce((s, c) => s + c.qty, 0)} ürün · {total.toFixed(2)} ₺
+                                {cart.reduce((s, c) => s + c.qty, 0)} {t('order.itemCount', lang)} · {total.toFixed(2)} ₺
                             </p>
                         )}
                     </div>
@@ -231,14 +262,14 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                             color: tableError ? 'var(--danger)' : 'var(--text2)',
                             fontFamily: 'Inter, sans-serif',
                         }}>
-                            Masa Numarası
+                            {t('order.tableNo', lang)}
                             <span style={{ color: 'var(--danger)', marginLeft: '3px' }}>*</span>
                         </label>
                         <input
                             type="text"
                             value={tableNo}
                             onChange={e => { setTableNo(e.target.value); setTableError(false); setErrorMsg('') }}
-                            placeholder="Masa numaranız nedir?"
+                            placeholder={t('order.tableNoPlaceholder', lang)}
                             className="input-field"
                             style={{
                                 background: 'var(--surface2)',
@@ -248,7 +279,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                         />
                         {tableError && (
                             <p style={{ fontSize: '12px', marginTop: '6px', color: 'var(--danger)', fontFamily: 'Inter, sans-serif' }}>
-                                ⚠️ Lütfen masa numaranızı girin.
+                                ⚠️ {t('order.tableError', lang)}
                             </p>
                         )}
                     </div>
@@ -263,19 +294,19 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                             color: 'var(--text2)',
                             fontFamily: 'Inter, sans-serif',
                         }}>
-                            Size nasıl hitap edelim?
-                            <span style={{ color: 'var(--muted)', fontWeight: 400, marginLeft: '4px' }}>(isteğe bağlı)</span>
+                            {t('order.customerName', lang)}
+                            <span style={{ color: 'var(--muted)', fontWeight: 400, marginLeft: '4px' }}>{t('order.customerNameOptional', lang)}</span>
                         </label>
                         <input
                             type="text"
                             value={customerName}
                             onChange={e => setCustomerName(e.target.value)}
-                            placeholder="Adınız (örn: Ahmet)"
+                            placeholder={t('order.customerNamePlaceholder', lang)}
                             className="input-field"
                             style={{ background: 'var(--surface2)' }}
                         />
                         <p style={{ fontSize: '11px', marginTop: '6px', color: 'var(--muted)', fontFamily: 'Inter, sans-serif' }}>
-                            Siparışinizi size özel teslim edebilmek için.
+                            {t('order.customerNameHint', lang)}
                         </p>
                     </div>
 
@@ -289,7 +320,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                             color: 'var(--text2)',
                             fontFamily: 'Inter, sans-serif',
                         }}>
-                            Menüden Seçin
+                            {t('order.selectFromMenu', lang)}
                         </label>
                         {/* Arama */}
                         <div style={{ position: 'relative', marginBottom: '12px' }}>
@@ -305,7 +336,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                                 type="text"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Ürün ara..."
+                                placeholder={t('order.searchPlaceholder', lang)}
                                 className="input-field"
                                 style={{ paddingLeft: '36px', background: 'var(--surface2)' }}
                             />
@@ -354,13 +385,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                                                         onClick={() => setSelectedItem(item)}
                                                     >
                                                         {/* Küçük görsel */}
-                                                        <img
-                                                            src={item.image_url || noImage}
-                                                            alt={item.name}
-                                                            className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
-                                                            style={{ objectFit: item.image_url ? 'cover' : 'contain', padding: item.image_url ? 0 : '4px', background: 'var(--surface)' }}
-                                                            onError={e => { e.target.src = noImage; e.target.style.objectFit = 'contain'; e.target.style.padding = '4px' }}
-                                                        />
+                                                        <ItemThumbnail item={item} />
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
                                                             <span className="text-sm truncate" style={{ color: 'var(--text)' }}>
                                                                 {item.name}
@@ -371,7 +396,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                                                                     background: 'rgba(251,191,36,0.15)', color: '#92400E', fontWeight: 700,
                                                                     border: '1px solid rgba(251,191,36,0.35)',
                                                                 }}>
-                                                                    ✨ YENİ
+                                                                    {t('product.new', lang)}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -423,7 +448,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                     {cart.length > 0 && (
                         <div>
                             <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--text2)' }}>
-                                Seçilenler
+                                {t('order.selected', lang)}
                             </label>
                             <div
                                 className="rounded-2xl overflow-hidden"
@@ -472,12 +497,12 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                             color: 'var(--text2)',
                             fontFamily: 'Inter, sans-serif',
                         }}>
-                            Sipariş Notu <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(isteğe bağlı)</span>
+                            {t('order.note', lang)} <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('order.noteOptional', lang)}</span>
                         </label>
                         <textarea
                             value={note}
                             onChange={e => setNote(e.target.value)}
-                            placeholder="Özel istekler, alerjenler, pişirme tercihleri..."
+                            placeholder={t('order.notePlaceholder', lang)}
                             rows={3}
                             className="input-field"
                             style={{ background: 'var(--surface2)', resize: 'none' }}
@@ -514,7 +539,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
 
                 {cart.length > 0 && (
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium" style={{ color: 'var(--text2)' }}>Toplam Tutar</span>
+                        <span className="text-sm font-medium" style={{ color: 'var(--text2)' }}>{t('order.totalAmount', lang)}</span>
                         <span className="text-2xl font-bold" style={{ color: 'var(--accent)', fontFamily: 'Poppins' }}>
                             {total.toFixed(2)} ₺
                         </span>
@@ -546,13 +571,13 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
                     }}
                 >
                     {status === STATUS.LOADING ? (
-                        <><Loader2 size={18} className="animate-spin" /> Gönderiliyor...</>
+                        <><Loader2 size={18} className="animate-spin" /> {t('order.sending', lang)}</>
                     ) : (
-                        <>✅ Siparişi Onayla</>
+                        <>{t('order.confirm', lang)}</>
                     )}
                 </button>
                 <p className="text-center text-xs mt-2" style={{ color: 'var(--muted)', fontSize: '11px' }}>
-                    <span style={{ color: 'var(--danger)' }}>*</span> Zorunlu alan
+                    <span style={{ color: 'var(--danger)' }}>*</span> {t('order.requiredField', lang)}
                 </p>
             </div>
         </Backdrop>
@@ -560,7 +585,7 @@ export default function OrderConfirmModal({ menuItems, onClose, settings }) {
 }
 
 /* ── Backdrop wrapper ─────────────────────────────────────── */
-function Backdrop({ children, onClose, selectedItem, onCloseDetail, addToCart, changeQty, cart }) {
+function Backdrop({ children, onClose, selectedItem, onCloseDetail, addToCart, changeQty, cart, lang }) {
     return (
         <>
             <div
@@ -596,6 +621,7 @@ function Backdrop({ children, onClose, selectedItem, onCloseDetail, addToCart, c
                     onClose={onCloseDetail}
                     onAdd={addToCart}
                     onChangeQty={changeQty}
+                    lang={lang}
                 />
             )}
         </>

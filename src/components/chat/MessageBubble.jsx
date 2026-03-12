@@ -43,10 +43,11 @@ function TypingIndicator() {
     )
 }
 
-export default function MessageBubble({ message, isTyping }) {
+export default function MessageBubble({ message, isTyping, lang = 'tr' }) {
     if (isTyping) return <TypingIndicator />
 
     const isUser = message.role === 'user'
+    const timeLocale = lang === 'en' ? 'en-US' : 'tr-TR'
 
     return (
         <div
@@ -131,7 +132,7 @@ export default function MessageBubble({ message, isTyping }) {
                     color: isUser ? 'rgba(255,255,255,0.45)' : 'var(--muted)',
                     fontFamily: 'Inter, sans-serif',
                 }}>
-                    {new Date(message.ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(message.ts).toLocaleTimeString(timeLocale, { hour: '2-digit', minute: '2-digit' })}
                 </div>
             </div>
         </div>

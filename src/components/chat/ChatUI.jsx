@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { RotateCcw, ChefHat, Sparkles } from 'lucide-react'
+import { RotateCcw, ChefHat, Sparkles, Globe } from 'lucide-react'
 import MessageBubble from './MessageBubble'
 import InputBar from './InputBar'
 import OrderConfirmModal from './OrderConfirmModal'
 import { useChat } from '../../hooks/useChat'
+import { useLanguage } from '../../context/LanguageContext'
+import { LANGUAGES } from '../../lib/i18n'
 
 const logoModules = import.meta.glob('../../assets/logo.png', { eager: true, as: 'url' })
 const logoSrc = logoModules['../../assets/logo.png'] ?? null
 
 export default function ChatUI() {
-    const { messages, isLoading, menuItems, settings, error, isInitialized, sendMessage, resetChat } = useChat()
+    const { lang, toggleLang, t } = useLanguage()
+    const { messages, isLoading, menuItems, settings, error, isInitialized, sendMessage, resetChat } = useChat(lang)
     const [showModal, setShowModal] = useState(false)
     const bottomRef = useRef(null)
 
@@ -18,6 +21,7 @@ export default function ChatUI() {
     }, [messages, isLoading])
 
     const restaurantName = settings?.restaurant_name || import.meta.env.VITE_RESTAURANT_NAME || 'MenuMind'
+    const otherLang = lang === 'tr' ? LANGUAGES.en : LANGUAGES.tr
 
     return (
         <div className="flex flex-col h-full" style={{ background: 'var(--surface)' }}>
@@ -77,29 +81,57 @@ export default function ChatUI() {
                                 display: 'block',
                             }} />
                             <span style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.70)', fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
-                                Garson · AI Menü Asistanı
+                                {t('header.subtitle')}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                {/* Reset button */}
-                <button
-                    onClick={resetChat}
-                    title="Sohbeti sıfırla"
-                    style={{
-                        width: '36px', height: '36px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        borderRadius: '10px',
-                        background: 'rgba(255,255,255,0.12)',
-                        border: '1px solid rgba(255,255,255,0.18)',
-                        color: 'rgba(255,255,255,0.80)',
-                        transition: 'background 0.18s',
-                        position: 'relative',
-                    }}
-                >
-                    <RotateCcw size={14} />
-                </button>
+                {/* Right side buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+                    {/* Language switcher button */}
+                    <button
+                        onClick={toggleLang}
+                        title={`Switch to ${otherLang.name}`}
+                        style={{
+                            height: '36px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+                            borderRadius: '10px',
+                            padding: '0 10px',
+                            background: 'rgba(255,255,255,0.12)',
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            color: 'rgba(255,255,255,0.90)',
+                            transition: 'all 0.18s',
+                            cursor: 'pointer',
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            letterSpacing: '0.02em',
+                        }}
+                    >
+                        <Globe size={13} style={{ opacity: 0.8 }} />
+                        <span>{otherLang.label}</span>
+                    </button>
+
+                    {/* Reset button */}
+                    <button
+                        onClick={resetChat}
+                        title={t('header.reset')}
+                        style={{
+                            width: '36px', height: '36px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            borderRadius: '10px',
+                            background: 'rgba(255,255,255,0.12)',
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            color: 'rgba(255,255,255,0.80)',
+                            transition: 'background 0.18s',
+                            position: 'relative',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        <RotateCcw size={14} />
+                    </button>
+                </div>
             </header>
 
             {/* ── Messages ────────────────────────────────────── */}
@@ -127,14 +159,14 @@ export default function ChatUI() {
                                 <Sparkles size={20} style={{ color: 'var(--accent)' }} />
                             </div>
                             <p style={{ fontSize: '13px', color: 'var(--muted)', fontFamily: 'Inter, sans-serif' }}>
-                                Yükleniyor...
+                                {t('loading.text')}
                             </p>
                         </div>
                     </div>
                 )}
 
                 {messages.map(msg => (
-                    <MessageBubble key={msg.id} message={msg} />
+                    <MessageBubble key={msg.id} message={msg} lang={lang} />
                 ))}
 
                 {isLoading && <MessageBubble isTyping />}
@@ -201,12 +233,12 @@ export default function ChatUI() {
                                 background: 'rgba(255,255,255,0.20)',
                                 fontSize: '11px', lineHeight: 1,
                             }}>✓</span>
-                            Siparişimi Onayla
+                            {t('cta.confirmOrder')}
                         </button>
                     </div>
                 )}
 
-                <InputBar onSend={sendMessage} isLoading={isLoading} disabled={!isInitialized} />
+                <InputBar onSend={sendMessage} isLoading={isLoading} disabled={!isInitialized} lang={lang} />
             </div>
 
             {/* ── Modal ──────────────────────────────────────────── */}
@@ -215,6 +247,7 @@ export default function ChatUI() {
                     menuItems={menuItems}
                     settings={settings}
                     onClose={() => setShowModal(false)}
+                    lang={lang}
                 />
             )}
         </div>

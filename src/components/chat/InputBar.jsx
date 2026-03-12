@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send } from 'lucide-react'
+import { t } from '../../lib/i18n'
 
-export default function InputBar({ onSend, isLoading, disabled }) {
+export default function InputBar({ onSend, isLoading, disabled, lang = 'tr' }) {
     const [text, setText] = useState('')
     const textareaRef = useRef(null)
     const [focused, setFocused] = useState(false)
@@ -31,6 +32,12 @@ export default function InputBar({ onSend, isLoading, disabled }) {
     const canSend = text.trim() && !isLoading && !disabled
     const isActive = focused || canSend
 
+    const placeholder = disabled
+        ? t('input.placeholder.loading', lang)
+        : isLoading
+            ? t('input.placeholder.typing', lang)
+            : t('input.placeholder.default', lang)
+
     return (
         <div style={{
             padding: '10px 14px 16px',
@@ -54,11 +61,7 @@ export default function InputBar({ onSend, isLoading, disabled }) {
                     onKeyDown={handleKeyDown}
                     onFocus={() => setFocused(true)}
                     onBlur={() => setFocused(false)}
-                    placeholder={
-                        disabled ? 'Yükleniyor...'
-                            : isLoading ? 'Garson yazıyor...'
-                                : 'Bir şey sorun...'
-                    }
+                    placeholder={placeholder}
                     disabled={isLoading || disabled}
                     rows={1}
                     style={{
@@ -104,7 +107,7 @@ export default function InputBar({ onSend, isLoading, disabled }) {
                 opacity: 0.65,
                 fontFamily: 'Inter, sans-serif',
             }}>
-                Enter ile gönder · Shift+Enter yeni satır
+                {t('input.hint', lang)}
             </p>
         </div>
     )
