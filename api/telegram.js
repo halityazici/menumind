@@ -101,7 +101,7 @@ export default async function handler(req, res) {
 
     const message = [
         '🔔 <b>Yeni Sipariş Geldi!</b>',
-        `🕐 ${new Date().toLocaleTimeString('tr-TR')}`,
+        `🕐 ${new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul' })}`,
         order.table_no ? `🪑 Masa: <b>${sanitize(order.table_no)}</b>` : '',
         order.customer_name ? `👤 Müşteri: <b>${sanitize(order.customer_name)}</b>` : '',
         '',
