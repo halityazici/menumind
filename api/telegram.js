@@ -33,10 +33,14 @@ function pruneMap() {
     }
 }
 
-// Telegram Markdown özel karakterlerini temizle
+// HTML özel karakterlerini escape et
 function sanitize(str) {
     if (!str) return ''
-    return String(str).replace(/[*_`[\]()~>#+=|{}.!-]/g, '\\$&').slice(0, 200)
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .slice(0, 200)
 }
 
 export default async function handler(req, res) {
@@ -96,18 +100,18 @@ export default async function handler(req, res) {
         .join('\n')
 
     const message = [
-        '🔔 *Yeni Sipariş Geldi\\!*',
+        '🔔 <b>Yeni Sipariş Geldi!</b>',
         `🕐 ${new Date().toLocaleTimeString('tr-TR')}`,
-        order.table_no ? `🪑 Masa: *${sanitize(order.table_no)}*` : '',
-        order.customer_name ? `👤 Müşteri: *${sanitize(order.customer_name)}*` : '',
+        order.table_no ? `🪑 Masa: <b>${sanitize(order.table_no)}</b>` : '',
+        order.customer_name ? `👤 Müşteri: <b>${sanitize(order.customer_name)}</b>` : '',
         '',
-        '*Sipariş Detayı:*',
+        '<b>Sipariş Detayı:</b>',
         itemsList,
         '',
-        `💰 *Toplam: ${Number(order.total).toFixed(2)} ₺*`,
-        order.customer_note ? `📝 Not: _${sanitize(order.customer_note)}_` : '',
+        `💰 <b>Toplam: ${Number(order.total).toFixed(2)} ₺</b>`,
+        order.customer_note ? `📝 Not: <i>${sanitize(order.customer_note)}</i>` : '',
         '',
-        `🆔 Sipariş ID: \`${String(order.id || '').slice(0, 8)}\``,
+        `🆔 Sipariş ID: <code>${String(order.id || '').slice(0, 8)}</code>`,
     ].filter(Boolean).join('\n')
 
     try {
@@ -117,10 +121,13 @@ export default async function handler(req, res) {
             method: 'POST',
             signal: controller.signal,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: targetChatId, text: message, parse_mode: 'MarkdownV2' }),
+            body: JSON.stringify({ chat_id: targetChatId, text: message, parse_mode: 'HTML' }),
         })
         clearTimeout(timeout)
         const data = await r.json()
+        if (!data.ok) {
+            console.error('Telegram API returned error:', data)
+        }
         return res.status(200).json(data)
     } catch (err) {
         if (err.name === 'AbortError') {
