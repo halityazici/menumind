@@ -98,17 +98,18 @@ function HeaderBlock({ title, subtitle }) {
                 background: 'rgba(255,255,255,0.04)',
             }} />
             <div style={{
-                width: '72px', height: '72px',
-                borderRadius: '20px',
+                width: '220px', height: '72px',
+                borderRadius: '16px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 18px',
                 background: 'rgba(255,255,255,0.15)',
                 border: '2px solid rgba(255,255,255,0.25)',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.22)',
                 overflow: 'hidden',
+                padding: '6px 14px',
             }}>
                 {logoSrc
-                    ? <img src={logoSrc} alt="MenuMind" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ? <img src={logoSrc} alt="MenuMind" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     : <ChefHat size={30} color="white" />
                 }
             </div>

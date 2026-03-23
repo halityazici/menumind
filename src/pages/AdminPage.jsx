@@ -43,16 +43,17 @@ function AdminDashboard({ onLogout }) {
                 {/* Brand */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
                     <div style={{
-                        width: '40px', height: '40px',
-                        borderRadius: '12px',
+                        width: '130px', height: '42px',
+                        borderRadius: '10px',
                         overflow: 'hidden', flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'rgba(255,255,255,0.15)',
                         border: '1.5px solid rgba(255,255,255,0.25)',
                         boxShadow: '0 3px 12px rgba(0,0,0,0.20)',
+                        padding: '3px 8px',
                     }}>
                         {logoSrc
-                            ? <img src={logoSrc} alt="MenuMind" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            ? <img src={logoSrc} alt="MenuMind" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
                             : <span style={{ color: 'white', fontWeight: 800, fontSize: '13px', fontFamily: 'Poppins' }}>MM</span>
                         }
                     </div>

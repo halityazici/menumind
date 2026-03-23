@@ -90,17 +90,18 @@ function ChatLayout() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', position: 'relative' }}>
           <div
             style={{
-              width: '48px', height: '48px',
-              borderRadius: '14px',
+              width: '160px', height: '56px',
+              borderRadius: '12px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden', flexShrink: 0,
               background: 'rgba(255,255,255,0.15)',
               border: '1.5px solid rgba(255,255,255,0.25)',
               boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+              padding: '4px 10px',
             }}
           >
             {logoSrc
-              ? <img src={logoSrc} alt="MenuMind" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ? <img src={logoSrc} alt="MenuMind" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               : <ChefHat size={22} color="white" />
             }
           </div>
