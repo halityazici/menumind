@@ -50,14 +50,14 @@ export default function ChatUI() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
                     {/* Avatar */}
                     <div style={{
-                        width: '130px', height: '42px',
+                        width: '160px', height: '48px',
                         borderRadius: '10px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         overflow: 'hidden', flexShrink: 0,
                         background: 'rgba(255,255,255,0.15)',
                         border: '1.5px solid rgba(255,255,255,0.25)',
                         boxShadow: '0 2px 10px rgba(0,0,0,0.20)',
-                        padding: '3px 8px',
+                        padding: '3px 6px',
                     }}>
                         {logoSrc
                             ? <img src={logoSrc} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
